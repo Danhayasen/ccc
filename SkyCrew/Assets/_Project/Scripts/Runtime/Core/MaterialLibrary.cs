@@ -13,6 +13,9 @@ namespace SkyCrew.Core
         private static readonly Dictionary<Color, Material> EmissiveCache = new Dictionary<Color, Material>();
         private static Shader _lit;
 
+        /// <summary>Material com o shader Lit do URP, em Settings/Resources (criado pelo menu SkyCrew > 1).</summary>
+        public const string BaseMaterialResource = "SkyCrew/Materiais/BaseLit";
+
         public static readonly Color Branco = Hex(0xF4F1EA);
         public static readonly Color Azul = Hex(0x2452A8);
         public static readonly Color AzulEscuro = Hex(0x1B356E);
@@ -35,6 +38,16 @@ namespace SkyCrew.Core
         {
             get
             {
+                if (_lit == null)
+                {
+                    // Material de referencia (criado pelo menu SkyCrew > 1) garante o shader no build.
+                    var reference = Resources.Load<Material>(BaseMaterialResource);
+                    if (reference != null)
+                    {
+                        _lit = reference.shader;
+                    }
+                }
+
                 if (_lit == null)
                 {
                     _lit = Shader.Find("Universal Render Pipeline/Lit");

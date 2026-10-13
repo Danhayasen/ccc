@@ -40,12 +40,36 @@ namespace SkyCrew.EditorTools
 
             GraphicsSettings.defaultRenderPipeline = pipeline;
             QualitySettings.renderPipeline = pipeline;
+            // Materiais de referencia em Resources: garantem que o shader Lit (e a variante com
+            // emissao) entre no build, ja que o MaterialLibrary cria materiais em codigo.
+            var lit = Shader.Find("Universal Render Pipeline/Lit");
+            string materials = SettingsFolder + "/Resources/" + MaterialLibrary.BaseMaterialResource.Substring(0, MaterialLibrary.BaseMaterialResource.LastIndexOf('/'));
+            Directory.CreateDirectory(materials);
+            EnsureMaterial(lit, "Assets/_Project/Settings/Resources/" + MaterialLibrary.BaseMaterialResource + ".mat", false);
+            EnsureMaterial(lit, "Assets/_Project/Settings/Resources/" + MaterialLibrary.BaseMaterialResource + "Emissivo.mat", true);
             AssetDatabase.SaveAssets();
             Debug.Log($"[SkyCrew] URP configurado: {assetPath}");
 #else
             Debug.LogError("[SkyCrew] Pacote com.unity.render-pipelines.universal nao encontrado (veja Packages/manifest.json).");
 #endif
             Debug.Log("[SkyCrew] Confira em Project Settings > Player > Active Input Handling = 'Input System Package (New)'.");
+        }
+
+        private static void EnsureMaterial(Shader shader, string path, bool emissive)
+        {
+            if (shader == null || AssetDatabase.LoadAssetAtPath<Material>(path) != null)
+            {
+                return;
+            }
+
+            var material = new Material(shader);
+            if (emissive)
+            {
+                material.EnableKeyword("_EMISSION");
+                material.SetColor("_EmissionColor", Color.white);
+            }
+
+            AssetDatabase.CreateAsset(material, path);
         }
 
         [MenuItem("SkyCrew/2. Recriar cena do protótipo", priority = 2)]

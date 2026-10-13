@@ -31,7 +31,13 @@ namespace SkyCrew.Core
             File.WriteAllText(temp, content, new System.Text.UTF8Encoding(false));
             if (File.Exists(target))
             {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                // No navegador (sistema de arquivos do Emscripten) File.Replace nao e suportado.
+                File.Delete(target);
+                File.Move(temp, target);
+#else
                 File.Replace(temp, target, null);
+#endif
             }
             else
             {

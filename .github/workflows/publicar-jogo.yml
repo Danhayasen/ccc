@@ -1,0 +1,91 @@
+# Compila o SkyCrew para navegador (Unity WebGL) e publica no GitHub Pages, junto com o
+# visualizador 3D do aviao. Sem a licenca da Unity configurada, publica so o visualizador e
+# uma pagina avisando que o jogo esta em preparo. Passo a passo: SkyCrew/Docs/PUBLICAR_NO_NAVEGADOR.md
+name: Publicar jogo no navegador
+
+on:
+  push:
+    branches: [main, claude/beautiful-gates-dsnswj]
+    paths: ['SkyCrew/**', 'aviao/**', '.github/workflows/publicar-jogo.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publicar-jogo
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar licenca da Unity
+        id: licenca
+        run: |
+          if [ -n "$UNITY_LICENSE" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+            echo "Licenca encontrada: o jogo sera compilado."
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Segredos UNITY_LICENSE, UNITY_EMAIL e UNITY_PASSWORD ausentes. Publicando so o visualizador do aviao."
+          fi
+
+      - name: Liberar espaco em disco
+        if: steps.licenca.outputs.ok == 'true'
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          large-packages: false
+
+      - name: Cache da pasta Library
+        if: steps.licenca.outputs.ok == 'true'
+        uses: actions/cache@v4
+        with:
+          path: SkyCrew/Library
+          key: Library-WebGL-${{ hashFiles('SkyCrew/Assets/**', 'SkyCrew/Packages/**', 'SkyCrew/ProjectSettings/**') }}
+          restore-keys: Library-WebGL-
+
+      - name: Compilar com a Unity (WebGL)
+        if: steps.licenca.outputs.ok == 'true'
+        uses: game-ci/unity-builder@v4
+        with:
+          projectPath: SkyCrew
+          unityVersion: 6000.0.84f1
+          targetPlatform: WebGL
+          buildName: SkyCrew
+          buildsPath: build
+          buildMethod: SkyCrew.EditorTools.SkyCrewBuild.BuildWebGL
+          versioning: None
+          allowDirtyBuild: true
+
+      - name: Montar o site
+        run: |
+          mkdir -p site/jogo
+          cp SkyCrew/Tools/Site/index.html site/index.html
+          rsync -a --exclude 'blender' --exclude '*.blend' --exclude '*.blend1' aviao/ site/aviao/
+          if [ -f build/WebGL/SkyCrew/index.html ]; then
+            sudo cp -r build/WebGL/SkyCrew/. site/jogo/
+            sudo chown -R "$(id -u):$(id -g)" site/jogo
+          else
+            cp SkyCrew/Tools/Site/jogo-pendente.html site/jogo/index.html
+          fi
+          touch site/.nojekyll
+          du -sh site site/jogo
+          find site -maxdepth 3 | head -50
+
+      - name: Publicar na branch gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: 'Publicar SkyCrew no navegador'
