@@ -41,7 +41,7 @@ namespace SkyCrew.Domain.Persistence
     /// Formato texto simples, legivel e versionado (sem dependencia de JSON da Unity):
     /// <code>
     /// SKYCREW_SAVE
-    /// versao=2
+    /// versao=3
     /// chave=valor
     /// ...
     /// checksum=XXXXXXXX     (FNV-1a 32 bits de todas as linhas anteriores)
@@ -60,6 +60,8 @@ namespace SkyCrew.Domain.Persistence
             Line(sb, "config.volume_geral", F(d.Settings.MasterVolume));
             Line(sb, "config.volume_musica", F(d.Settings.MusicVolume));
             Line(sb, "config.volume_efeitos", F(d.Settings.SfxVolume));
+            Line(sb, "config.volume_ambiente", F(d.Settings.AmbienceVolume));
+            Line(sb, "config.volume_vozes", F(d.Settings.VoiceVolume));
             Line(sb, "config.sensibilidade_mouse", F(d.Settings.MouseSensitivity));
             Line(sb, "config.inverter_y", d.Settings.InvertY ? "1" : "0");
             Line(sb, "stats.voos", I(d.Stats.FlightsPlayed));
@@ -70,7 +72,8 @@ namespace SkyCrew.Domain.Persistence
             Line(sb, "stats.melhor_pontuacao", I(d.Stats.BestScore));
             Line(sb, "stats.pontos_totais", d.Stats.TotalScore.ToString(CultureInfo.InvariantCulture));
             Line(sb, "desbloqueios", string.Join(";", d.Unlocks));
-            Line(sb, "equipado", d.EquippedOutfit ?? "");
+            Line(sb, "equipado.uniforme", d.EquippedUniform ?? SaveData.DefaultUniform);
+            Line(sb, "equipado.acessorio", d.EquippedAccessory ?? "");
             Line(sb, "partidas_processadas", string.Join(";", d.ProcessedMatches));
             string body = sb.ToString();
             return body + "checksum=" + Checksum(body) + "\n";
@@ -132,6 +135,8 @@ namespace SkyCrew.Domain.Persistence
                 d.Settings.MasterVolume = Clamp01(GetF(values, "config.volume_geral", d.Settings.MasterVolume));
                 d.Settings.MusicVolume = Clamp01(GetF(values, "config.volume_musica", d.Settings.MusicVolume));
                 d.Settings.SfxVolume = Clamp01(GetF(values, "config.volume_efeitos", d.Settings.SfxVolume));
+                d.Settings.AmbienceVolume = Clamp01(GetF(values, "config.volume_ambiente", d.Settings.AmbienceVolume));
+                d.Settings.VoiceVolume = Clamp01(GetF(values, "config.volume_vozes", d.Settings.VoiceVolume));
                 d.Settings.MouseSensitivity = Math.Max(0.1f, Math.Min(5f, GetF(values, "config.sensibilidade_mouse", 1f)));
                 d.Settings.InvertY = Get(values, "config.inverter_y", "0") == "1";
 
@@ -140,10 +145,34 @@ namespace SkyCrew.Domain.Persistence
                     d.Unlocks.Add(u);
                 }
 
-                d.EquippedOutfit = Get(values, "equipado", d.EquippedOutfit);
-                if (!d.Unlocks.Contains(d.EquippedOutfit))
+                if (version >= 3)
                 {
-                    d.EquippedOutfit = "uniforme_azul"; // nunca equipar algo bloqueado
+                    d.EquippedUniform = Get(values, "equipado.uniforme", SaveData.DefaultUniform);
+                    d.EquippedAccessory = Get(values, "equipado.acessorio", "");
+                }
+                else
+                {
+                    // Migracao v2 -> v3: um unico "equipado" vira uniforme OU acessorio.
+                    string old = Get(values, "equipado", SaveData.DefaultUniform);
+                    if (old.StartsWith("uniforme_", StringComparison.Ordinal))
+                    {
+                        d.EquippedUniform = old;
+                    }
+                    else
+                    {
+                        d.EquippedAccessory = old;
+                    }
+                }
+
+                // Nunca equipar algo bloqueado (ou de categoria errada).
+                if (!d.Unlocks.Contains(d.EquippedUniform) || !d.EquippedUniform.StartsWith("uniforme_", StringComparison.Ordinal))
+                {
+                    d.EquippedUniform = SaveData.DefaultUniform;
+                }
+
+                if (d.EquippedAccessory.Length > 0 && !d.Unlocks.Contains(d.EquippedAccessory))
+                {
+                    d.EquippedAccessory = "";
                 }
 
                 if (version >= 2)

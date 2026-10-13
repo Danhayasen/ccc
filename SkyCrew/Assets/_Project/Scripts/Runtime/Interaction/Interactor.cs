@@ -34,6 +34,9 @@ namespace SkyCrew.Interaction
 
         public float LastFeedbackTime { get; private set; }
 
+        /// <summary>Interacao executada com sucesso (audio, estatisticas, tutorial).</summary>
+        public event System.Action<IInteractable, InteractionVerb> Interacted;
+
         private void Awake()
         {
             Hands = GetComponent<CarrySocket>();
@@ -152,7 +155,13 @@ namespace SkyCrew.Interaction
                 return;
             }
 
-            Current.Execute(this);
+            var target = Current;
+            var verb = target.GetVerb(this); // antes de executar (o verbo pode mudar depois)
+            if (target.Execute(this))
+            {
+                Interacted?.Invoke(target, verb);
+            }
+
             Scan();
         }
 

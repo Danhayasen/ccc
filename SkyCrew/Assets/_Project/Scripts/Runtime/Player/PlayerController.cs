@@ -35,6 +35,9 @@ namespace SkyCrew.Player
             _motor.Stumbled += () => _animator?.Slip();
         }
 
+        /// <summary>Troca a animacao (ex.: novo uniforme). Os eventos do motor ja apontam para o campo.</summary>
+        public void SetAnimation(ICharacterAnimation animator) => _animator = animator;
+
         private void Update()
         {
             if (_input == null)

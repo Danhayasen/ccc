@@ -19,7 +19,7 @@ namespace SkyCrew.EditorTools
 
         private static readonly HashSet<string> Looping = new HashSet<string>
         {
-            "Parado", "Andar", "Correr", "Carregar", "CarregarParado", "Sentado", "Panico",
+            "Parado", "Andar", "Correr", "Carregar", "CarregarParado", "Sentado", "Panico", "PanicoSentado",
         };
 
         /// <summary>Nome limpo do clipe ("Armature|Armature|Andar" -> "Andar").</summary>
@@ -54,7 +54,7 @@ namespace SkyCrew.EditorTools
                                       .OfType<AnimationClip>()
                                       .Where(c => !c.name.StartsWith("__preview__"))
                                       .ToDictionary(c => CleanName(c.name), c => c);
-            string[] required = { "Parado", "Andar", "Correr", "Carregar", "CarregarParado", "Sentado", "Panico", "Escorregar", "Falar" };
+            string[] required = { "Parado", "Andar", "Correr", "Carregar", "CarregarParado", "Sentado", "Panico", "PanicoSentado", "Escorregar", "Falar" };
             var missing = required.Where(r => !byName.ContainsKey(r)).ToArray();
             if (missing.Length > 0)
             {
@@ -91,6 +91,8 @@ namespace SkyCrew.EditorTools
             seated.motion = byName["Sentado"];
             var panic = sm.AddState("Panico");
             panic.motion = byName["Panico"];
+            var seatedPanic = sm.AddState("PanicoSentado");
+            seatedPanic.motion = byName["PanicoSentado"];
             var slip = sm.AddState("Escorregar");
             slip.motion = byName["Escorregar"];
             var talk = sm.AddState("Falar");
@@ -100,7 +102,15 @@ namespace SkyCrew.EditorTools
             // Panico tem prioridade; sai quando para de reagir
             var toPanic = Transition(sm.AddAnyStateTransition(panic), 0.15f);
             toPanic.AddCondition(AnimatorConditionMode.If, 0, "Reacting");
+            toPanic.AddCondition(AnimatorConditionMode.IfNot, 0, "Seated");
             toPanic.canTransitionToSelf = false; // senao reiniciaria o panico a cada quadro
+
+            // Sentado continua na poltrona: panico com as pernas dobradas
+            var toSeatedPanic = Transition(sm.AddAnyStateTransition(seatedPanic), 0.15f);
+            toSeatedPanic.AddCondition(AnimatorConditionMode.If, 0, "Reacting");
+            toSeatedPanic.AddCondition(AnimatorConditionMode.If, 0, "Seated");
+            toSeatedPanic.canTransitionToSelf = false;
+            Transition(seatedPanic.AddTransition(seated), 0.3f).AddCondition(AnimatorConditionMode.IfNot, 0, "Reacting");
             var panicExit = Transition(panic.AddTransition(locomotion), 0.25f);
             panicExit.AddCondition(AnimatorConditionMode.IfNot, 0, "Reacting");
             panicExit.AddCondition(AnimatorConditionMode.IfNot, 0, "Seated");

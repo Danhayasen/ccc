@@ -178,9 +178,10 @@ O visual vem de módulos FBX e os colisores são caixas definidas em código. Tr
 
 ## Salvamento e progressão
 
-- `SaveData` guarda configurações, estatísticas permanentes, desbloqueios, item equipado e os ids das últimas 32 partidas contabilizadas. Não guarda estado de partida nem segredos (há teste para isso).
+- `SaveData` (versão 3) guarda configurações (volumes geral, música, ambiente, efeitos e vozes; sensibilidade; inverter Y), estatísticas permanentes, desbloqueios, uniforme e acessório equipados e os ids das últimas 32 partidas contabilizadas. Não guarda estado de partida nem segredos (há teste para isso).
 - `SaveSerializer` grava texto `chave=valor` versionado, com cultura invariante e checksum FNV-1a no fim. A leitura:
-  - converte arquivos v1 (`Migrated`);
+  - converte arquivos v1 e v2 (`Migrated`). Na v2, o campo único `equipado` vira uniforme **ou** acessório;
+  - nunca deixa equipado algo bloqueado ou de categoria errada;
   - limita valores absurdos;
   - recusa arquivo inconsistente ou corrompido.
 - `SaveService` sobre `ISaveStorage` (`FileSaveStorage` na Unity, gravação temporária e troca atômica; `MemorySaveStorage` nos testes).
@@ -210,3 +211,43 @@ O visual vem de módulos FBX e os colisores são caixas definidas em código. Tr
   - estados sentado, pânico (de qualquer estado, sem reiniciar a si mesmo), escorregar e falar.
 - **Em tempo de execução:** `CharacterAnimation.Attach` usa o Animator se o modelo e o controller existirem. Senão, cai na animação procedural (`ICharacterAnimation` é a interface comum). O "squash and stretch" é aplicado por cima nos dois casos.
 - **Sentado:** a raiz do passageiro fica no piso, no centro da poltrona, e a animação abaixa o quadril de 0,56 m para 0,46 m (o estofado fica a 0,47 m).
+
+### Uniformes e acessórios
+- Os uniformes (azul, vermelho, verde) são modelos completos `Comissaria[_Vermelho|_Verde].fbx`.
+- Os acessórios (`Lenco_Amarelo`, `Quepe_Dourado`) são malhas modeladas **no espaço da raiz do personagem**. `OutfitApplier` alinha o acessório à raiz enquanto o esqueleto ainda está em repouso e o prende ao osso (`Chest` ou `Head`). Assim ele acompanha qualquer animação.
+- O guarda-roupa só equipa itens desbloqueados (`ProgressionService.TryEquip`).
+
+## Áudio
+- `AudioRouter` (domínio, testado) decide **se** e **como** um som toca:
+  - volume por canal × volume geral;
+  - cooldown por som;
+  - máximo de instâncias simultâneas;
+  - variação de volume e tom a partir de semente (reproduzível);
+  - canal mudo não ocupa voz.
+- Canais: Música, Ambiente, Física, Interação, Vozes, Interface e Alertas. A configuração "Efeitos" cobre física, interação, interface e alertas.
+- `AudioDirector` (Unity) escuta o jogo e toca pelo roteador, com pool de 16 fontes (posicionais quando há ponto no mundo). Ele escuta:
+  - pedidos de passageiros, tarefas novas, concluídas e falhas;
+  - início de evento e aviso de cinto;
+  - interações (pegar, guardar, conversar, esfregar, bater);
+  - impactos de objetos;
+  - escorregão;
+  - vitória e derrota.
+- Loops: motor (mais alto em voo; o tom sobe com a turbulência), ronco da turbulência e música (abaixa durante a turbulência).
+- **Todos os sons são sintetizados em código** (`ProceduralClips`) e são provisórios. Os arquivos definitivos entram na Fase 6 com os mesmos ids.
+
+## Menus (provisórios, IMGUI)
+- **Fluxo:** Ready → menu principal → *Jogar* → embarque.
+- **Pausa:** Continuar, Reiniciar viagem, Configurações, Menu principal.
+- **Resultados:** Jogar de novo (direto, sem menu) ou Menu principal.
+- Configurações são aplicadas na hora (câmera e áudio) e salvas.
+- Testes PlayMode usam `GameBootstrap.AutoStart` para pular o menu.
+
+## Ferramentas de Editor (Parte 19)
+| Menu | Função |
+|---|---|
+| SkyCrew > 1. Configurar projeto (URP) | Cria e atribui o pipeline URP |
+| SkyCrew > 2. Recriar cena do protótipo | Cena com o `GameBootstrap` + Build Settings |
+| SkyCrew > 3. Validar recursos 3D | Relatório: modelos, triângulos, tamanhos, esqueleto/Animator, clipes, controller |
+| SkyCrew > 4. Criar dados padrão | ScriptableObjects de perfis e configuração |
+| SkyCrew > 5. Gerar Animator dos personagens | Clipes com loop + Animator Controller |
+| SkyCrew > Diagnóstico | Janela ao vivo: partida, eventos (forçar), tarefas, passageiros (necessidades, histórico, assustar/dar sede/frio), pular embarque, pousar agora |

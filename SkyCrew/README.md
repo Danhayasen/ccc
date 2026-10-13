@@ -6,11 +6,12 @@ cooperação online.
 
 - **Engine:** Unity 6 (6000.x) · C# · URP · Input System
 - **Plataforma inicial:** Windows PC
-- **Estado:** Fases 0, 1 e 2 implementadas, mais salvamento/progressão e personagens com esqueleto e animações (início da Fase 3). Regras testadas (113 testes); **ainda não executado no Editor da Unity** (veja *Estado real*)
+- **Estado:** Fases 0, 1 e 2 implementadas, mais salvamento/progressão, personagens com esqueleto e animações, uniformes/acessórios, áudio provisório e menus. Regras testadas (123 testes); **ainda não executado no Editor da Unity** (veja *Estado real*)
 
 ![Elenco](Tools/Blender/previas/elenco.png)
 ![Cabine](Tools/Blender/previas/cabine.png)
 ![Animações](Tools/Blender/previas/poses.png)
+![Uniformes](Tools/Blender/previas/uniformes.png)
 
 *Prévias renderizadas no Blender a partir dos próprios FBX que a Unity importa.*
 
@@ -29,12 +30,16 @@ cooperação online.
 | Jogador, interação, física, NavMesh, HUD, pausa, resultados | Implementado, **compila**, não executado | `verificar.sh` |
 | Mancha + esfregão (com escorregão), carrinho puxável que bloqueia o corredor, conserto da geladeira, gavetas de lanche/cobertor | Implementado, **compila**, não executado | `verificar.sh` |
 | Cena do protótipo e configuração URP | Preparados; **exigem o Editor** | `SkyCrew > ...` |
-| Salvamento (versão, checksum, migração, corrompido/ausente, gravação atômica) e progressão (estrelas, recorde, 8 desbloqueios, sem duplicar) | Implementado e testado | 20 testes |
+| Salvamento (versão 3, checksum, migrações v1→v2→v3, corrompido/ausente, gravação atômica) e progressão (estrelas, recorde, 8 desbloqueios, sem duplicar, uniforme + acessório) | Implementado e testado | 23 testes |
+| Áudio: 7 canais com volume, limite de repetição e de instâncias, variação reproduzível | Implementado e testado (regras) | 8 testes |
+| Áudio na Unity: 15 sons e 3 loops (motor, turbulência, música) **sintetizados por código (provisórios)** | Implementado, **compila** | — |
+| Menu principal, configurações (volumes, sensibilidade, inverter Y) e guarda-roupa (IMGUI provisório) | Implementado, **compila** | — |
+| Janela de diagnóstico no Editor (partida, eventos, tarefas, passageiros, botões de depuração) | Implementado, **compila** | `SkyCrew > Diagnóstico` |
 | Modelos 3D (cabine modular, 10 props) | Gerados e validados no Blender | reimportação dos FBX |
-| Personagens com esqueleto (nomes Humanoid, skinning rígido) e 9 animações (parado, andar, correr, carregar ×2, sentado, pânico, escorregar, falar) | Gerados e validados no Blender (pesos, loops, direção do passo, poses) | `gerar_personagens.py` |
+| Personagens com esqueleto (nomes Humanoid, skinning rígido), 3 uniformes, 2 acessórios e 10 animações (parado, andar, correr, carregar ×2, sentado, pânico em pé e sentado, escorregar, falar) | Gerados e validados no Blender (pesos, loops, direção do passo, poses) | `gerar_personagens.py` |
 | Animator Controller (gerado no Editor) + driver com reserva procedural | Implementado, **compila**; precisa do menu *SkyCrew > 5* no Editor | — |
-| Testes PlayMode (5) | Escritos e **compilam**; rodam só na Unity | — |
-| Áudio, menu principal, multiplayer | Ainda não implementados | ROADMAP |
+| Testes PlayMode (6) | Escritos e **compilam**; rodam só na Unity | — |
+| Multiplayer, sons definitivos, UI final | Ainda não implementados | ROADMAP |
 
 ## Como abrir e jogar
 
@@ -45,7 +50,7 @@ cooperação online.
 3. Quando a Unity perguntar se quer ativar o novo Input System, clique **Yes** (o Editor reinicia).
    Confira em *Project Settings > Player > Active Input Handling* = **Input System Package (New)**.
 4. Menu **SkyCrew > 1. Configurar projeto (URP)**.
-5. Abra `Assets/_Project/Scenes/Aircraft/Prototype.unity` e aperte **Play**.
+5. Abra `Assets/_Project/Scenes/Aircraft/Prototype.unity` e aperte **Play**. O jogo abre no **menu principal**: *Jogar*, *Uniformes e acessórios*, *Configurações*.
    Se a cena não abrir, use **SkyCrew > 2. Recriar cena do protótipo**.
 6. **SkyCrew > 5. Gerar Animator dos personagens** (sem isso, os personagens usam a animação procedural provisória).
 7. Opcional: **SkyCrew > 3. Validar recursos 3D** (relatório no Console) e **SkyCrew > 4. Criar dados padrão**.
@@ -78,7 +83,7 @@ Passageiros ignorados desistem do pedido e ficam mais impacientes. O Rui (presta
 
 ## Testes e verificação
 
-- **Na Unity:** *Window > General > Test Runner* → EditMode (113 testes de regras) e PlayMode (5 testes de cena).
+- **Na Unity:** *Window > General > Test Runner* → EditMode (123 testes de regras) e PlayMode (6 testes de cena).
 - **Sem a Unity** (Linux/Mac/Windows com .NET 8):
   ```bash
   Tools/Verificacao/verificar.sh

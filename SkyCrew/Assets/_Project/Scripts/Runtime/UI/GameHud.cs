@@ -34,6 +34,17 @@ namespace SkyCrew.UI
         private float _scale = 1f;
 
         private GUIStyle _panel, _title, _text, _small, _prompt, _bubble, _button, _big;
+
+        /// <summary>Estilos compartilhados com as telas de menu (validos dentro de OnGUI).</summary>
+        public GUIStyle TitleStyle => _big;
+        public GUIStyle TextStyle => _text;
+        public GUIStyle SmallStyle => _small;
+        public GUIStyle ButtonStyle => _button;
+        public float Scale => _scale;
+
+        public void EnsureStylesPublic() => EnsureStyles();
+
+        public void FillRect(Rect r, Color c) => Fill(r, c);
         private Texture2D _white;
 
         public bool IsPaused => _paused;
@@ -66,12 +77,12 @@ namespace SkyCrew.UI
             }
 
             bool ended = session.State.Current == MatchState.Results || session.State.Current == MatchState.Failed;
-            if (_input != null && _input.PausePressed && !ended)
+            if (_input != null && _input.PausePressed && !ended && session.State.IsPlayable)
             {
                 SetPaused(!_paused);
             }
 
-            bool menuOpen = _paused || ended;
+            bool menuOpen = _paused || ended || _game.MenuOpen || session.State.Current == MatchState.Ready;
             if (_input != null)
             {
                 _input.GameplayEnabled = !menuOpen;
@@ -169,7 +180,7 @@ namespace SkyCrew.UI
                     DrawCenterMessage(session.PendingInitSteps.Count > 0
                         ? "Preparando a aeronave..." : "Falha ao preparar a aeronave (veja o Console)");
                     break;
-                case MatchState.Ready:
+                case MatchState.Ready when !_game.MenuOpen:
                     DrawCenterMessage("Prepare-se para o embarque!");
                     if (_game.Save.LoadStatus == SkyCrew.Domain.Persistence.SaveLoadStatus.Corrupted)
                     {
@@ -189,7 +200,7 @@ namespace SkyCrew.UI
                     break;
             }
 
-            if (_paused)
+            if (_paused && !_game.GetComponent<MenuScreens>().IsSubScreenOpen)
             {
                 DrawPause(s);
             }
@@ -397,7 +408,8 @@ namespace SkyCrew.UI
             GUILayout.Space(20f * s);
             if (GUILayout.Button("Continuar", _button)) SetPaused(false);
             if (GUILayout.Button("Reiniciar viagem", _button)) { SetPaused(false); _game.RequestRestart(); }
-            if (GUILayout.Button("Sair", _button)) { SetPaused(false); _game.QuitToMenu(); }
+            if (GUILayout.Button("Configurações", _button)) { _game.GetComponent<MenuScreens>().OpenSettings(); }
+            if (GUILayout.Button("Menu principal", _button)) { SetPaused(false); _game.QuitToMenu(); }
             GUILayout.EndArea();
         }
 
@@ -424,7 +436,7 @@ namespace SkyCrew.UI
             DrawProgress(s);
             GUILayout.Space(16f * s);
             if (GUILayout.Button("Jogar de novo", _button)) _game.RequestRestart();
-            if (GUILayout.Button("Sair", _button)) _game.QuitToMenu();
+            if (GUILayout.Button("Menu principal", _button)) _game.QuitToMenu();
             GUILayout.EndArea();
         }
 

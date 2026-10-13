@@ -55,6 +55,9 @@ namespace SkyCrew.Physics
         public bool IsLocked => _locked;
         public Rigidbody Body => _body;
 
+        /// <summary>Qualquer objeto bateu com forca (posicao, velocidade relativa). Usado pelo audio.</summary>
+        public static event Action<Vector3, float> Impact;
+
         /// <summary>Chamado ao sair de cena (consumido ou descartado).</summary>
         public event Action<CarryableItem> Despawned;
 
@@ -202,6 +205,15 @@ namespace SkyCrew.Physics
             if (transform.position.y < -3f)
             {
                 ResetToSpawn(); // caiu para fora do mundo
+            }
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            float speed = collision.relativeVelocity.magnitude;
+            if (!IsHeld && speed > 0.8f)
+            {
+                Impact?.Invoke(collision.GetContact(0).point, speed);
             }
         }
 

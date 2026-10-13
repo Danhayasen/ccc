@@ -24,14 +24,14 @@ turbulência, vitória/derrota, pausa e resultados.
 
 ## Adiantado das fases seguintes (código pronto, falta validação no Editor)
 - **Salvamento e progressão** (Parte 16): testado.
-- **Fase 3 (parcial):** personagens com esqueleto, 9 animações, Animator gerado no Editor.
-  - Falta: variações modulares de roupa/cabelo, Animation Rigging para as mãos e LOD.
+- **Fase 3 (parcial):** personagens com esqueleto, 10 animações (inclui pânico sentado), Animator gerado no Editor, 3 uniformes e 2 acessórios encaixados em ossos.
+  - Falta: variações de cabelo/rosto nos passageiros, Animation Rigging para as mãos e LOD.
+- **Fase 6 (parcial):** áudio com canais e limites (sons provisórios), menu principal, configurações, guarda-roupa e janela de diagnóstico.
 
 ## Próximas tarefas, em ordem
 1. **Validação no Editor** das Fases 1 e 2 (TEST_PLAN.md) e correções.
 2. Ferramenta de Editor que gera **prefabs** a partir dos módulos (substituir `Resources` aos poucos).
 3. **Fase 3 — produção 3D (restante):**
-   - pânico sentado;
    - Animation Rigging para as mãos;
    - variações modulares de roupa, cabelo e acessórios;
    - LOD.
@@ -41,5 +41,5 @@ turbulência, vitória/derrota, pausa e resultados.
    - `Try*` e sinais como ServerRpc;
    - sincronização de jogadores, passageiros, carrinho e objetos;
    - lobby, desconexão e testes com 2 clientes.
-6. **Fase 6 — polimento:** UI Toolkit, áudio com canais, tutorial, balanceamento com jogadores reais e otimização medida.
+6. **Fase 6 — polimento:** UI Toolkit, sons definitivos, tutorial, opções gráficas e de controles, balanceamento com jogadores reais e otimização medida.
 7. **Fase 7 — build Windows** e validação final.

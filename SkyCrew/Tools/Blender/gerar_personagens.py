@@ -101,9 +101,8 @@ def construir_personagem(nome, pele, roupa, detalhe, calca, cabelo, estilo, aces
     b("Hips", m.esfera((0, 0.6, 0), (0.2, 0.1, 0.16), calca, segs=10, aneis=5))
     b("Chest", m.caixa((0, 1.12, 0.12), (0.18, 0.1, 0.04), detalhe, rot=(25, 0, 0)))
     b("Neck", m.cilindro((0, 1.17, 0), 0.08, 0.1, pele, lados=8))
-    if acessorio == "lenco":
-        b("Chest", m.caixa((0.05, 1.05, 0.17), (0.07, 0.16, 0.03), "amarelo", rot=(0, 0, 15)))
-        b("Chest", m.caixa((0.14, 0.98, 0.17), (0.08, 0.05, 0.02), "dourado"))
+    if acessorio == "uniforme":
+        b("Chest", m.caixa((0.14, 0.98, 0.17), (0.08, 0.05, 0.02), "dourado"))   # broche da companhia
     if acessorio == "bolsa":
         b("Spine", m.caixa((-0.2, 0.75, 0.1), (0.06, 0.18, 0.14), "marrom", chanfro=0.02))
     # cabeca
@@ -126,8 +125,8 @@ def construir_personagem(nome, pele, roupa, detalhe, calca, cabelo, estilo, aces
         b(H, m.esfera((0, 1.53, -0.04), (0.31, 0.24, 0.28), cabelo, segs=10, aneis=6))
     elif estilo == "careca":
         b(H, m.esfera((0, 1.42, -0.12), (0.255, 0.12, 0.16), cabelo, segs=10, aneis=5))
-    if acessorio == "lenco":
-        b(H, m.cilindro((0, 1.66, 0.0), 0.17, 0.1, "azul_escuro", lados=12, raio2=0.19))
+    if acessorio == "uniforme":
+        b(H, m.cilindro((0, 1.66, 0.0), 0.17, 0.1, roupa, lados=12, raio2=0.19))
         b(H, m.cilindro((0, 1.62, 0.0), 0.175, 0.025, "dourado", lados=12))
         b(H, m.esfera((0, 1.66, 0.17), (0.04, 0.03, 0.01), "dourado", segs=6, aneis=4))
     if acessorio == "oculos":
@@ -304,6 +303,24 @@ def criar_animacoes(arm):
              LeftUpperLeg=[balanco(P(arm, "LeftUpperLeg"), 10 * max(0.0, t))],
              RightUpperLeg=[balanco(P(arm, "RightUpperLeg"), 10 * max(0.0, -t))])
 
+    # Panico sentado: quadril e pernas como "Sentado", bracos para cima, cabeca balancando
+    nova_acao(arm, "PanicoSentado")
+    for k in range(9):
+        t = math.sin(2 * math.pi * k / 8)
+        P(arm, "Hips").location = (0, -0.1 + 0.015 * abs(t), 0)
+        rot = {
+            "LeftUpperArm": [abrir(P(arm, "LeftUpperArm"), 160 + 12 * t)],
+            "RightUpperArm": [abrir(P(arm, "RightUpperArm"), 160 - 12 * t)],
+            "LeftLowerArm": [abrir(P(arm, "LeftLowerArm"), 20 * t)],
+            "RightLowerArm": [abrir(P(arm, "RightLowerArm"), -20 * t)],
+            "Head": [girar(P(arm, "Head"), 18 * t)],
+            "Spine": [balanco(P(arm, "Spine"), -6)],
+        }
+        for lado in ("Left", "Right"):
+            rot[f"{lado}UpperLeg"] = [balanco(P(arm, f"{lado}UpperLeg"), 88)]
+            rot[f"{lado}LowerLeg"] = [balanco(P(arm, f"{lado}LowerLeg"), -88 + 10 * t * (1 if lado == "Left" else -1))]
+        pose(arm, k * 2 + 1, **rot)
+
     # Escorregar (uma vez): pernas para frente, corpo para tras, bracos abertos, volta
     nova_acao(arm, "Escorregar")
     for f, intensidade in ((1, 0.0), (6, 1.0), (16, 1.0), (30, 0.0)):
@@ -332,7 +349,7 @@ def criar_animacoes(arm):
                 ponto.interpolation = "BEZIER"
 
 
-ACOES_EM_LOOP = {"Parado", "Andar", "Correr", "Carregar", "CarregarParado", "Sentado", "Panico"}
+ACOES_EM_LOOP = {"Parado", "Andar", "Correr", "Carregar", "CarregarParado", "Sentado", "Panico", "PanicoSentado"}
 
 
 # ---------------------------------------------------------------------------
@@ -464,6 +481,15 @@ def validar_animacoes(arm_original):
         if not (ponta("LeftHand").y > 1.4 and ponta("RightHand").y > 1.4):
             erros.append(f"Panico: maos abaixo dos ombros no quadro {f}")
             break
+    # Panico sentado: maos para cima e quadril abaixado (continua na poltrona) em todos os quadros
+    acao = bpy.data.actions["PanicoSentado"]
+    arm_original.animation_data.action = acao
+    for f in range(int(acao.frame_range[0]), int(acao.frame_range[1]) + 1):
+        cena.frame_set(f)
+        quadril = para_unity(arm_original.matrix_world @ arm_original.pose.bones["Hips"].head)
+        if not (ponta("LeftHand").y > 1.25 and ponta("RightHand").y > 1.25 and quadril.y < 0.5):
+            erros.append(f"PanicoSentado: maos baixas ou quadril alto no quadro {f}")
+            break
     arm_original.animation_data.action = None
     return erros
 
@@ -472,15 +498,42 @@ def validar_fbx_animacoes(caminho):
     limpar_cena()
     bpy.ops.import_scene.fbx(filepath=caminho, axis_forward="-Z", axis_up="Y")
     nomes = sorted(a.name for a in bpy.data.actions)
-    esperadas = {"Parado", "Andar", "Correr", "Carregar", "CarregarParado", "Sentado", "Panico", "Escorregar", "Falar"}
+    esperadas = {"Parado", "Andar", "Correr", "Carregar", "CarregarParado", "Sentado", "Panico", "PanicoSentado",
+                 "Escorregar", "Falar"}
     achadas = {n.split("|")[-1] for n in nomes}
     faltando = esperadas - achadas
     return ([f"acoes faltando no FBX: {sorted(faltando)}"] if faltando else []), nomes
 
 
 PERSONAGENS = [
-    ("Comissaria", ("pele_1", "azul_escuro", "branco", "azul_escuro", "cabelo_castanho", "coque", "lenco"), 1.76),
+    ("Comissaria", ("pele_1", "azul_escuro", "branco", "azul_escuro", "cabelo_castanho", "coque", "uniforme"), 1.76),
+    ("Comissaria_Vermelho", ("pele_1", "vermelho", "branco", "azul_escuro", "cabelo_castanho", "coque", "uniforme"), 1.76),
+    ("Comissaria_Verde", ("pele_1", "verde", "branco", "azul_escuro", "cabelo_castanho", "coque", "uniforme"), 1.76),
 ] + [(n, (pele, roupa, det, calca, cab, est, acc), 1.72) for n, pele, roupa, det, calca, cab, est, acc in G.VARIANTES]
+
+
+PASTA_ACESSORIOS = os.path.join(G.ASSETS, "Characters", "Resources", "SkyCrew", "Acessorios")
+
+
+def acessorio_lenco():
+    raiz = G.vazio("Lenco_Amarelo")
+    m = G.Malha("Lenco_Malha")
+    m.caixa((0.0, 1.07, 0.175), (0.2, 0.07, 0.04), "amarelo", rot=(20, 0, 0), chanfro=0.015)   # no
+    m.caixa((0.05, 0.98, 0.19), (0.07, 0.16, 0.03), "amarelo", rot=(0, 0, 15), chanfro=0.01)  # ponta
+    m.caixa((-0.04, 0.99, 0.185), (0.06, 0.13, 0.03), "laranja", rot=(0, 0, -12), chanfro=0.01)
+    m.criar(raiz)
+    return raiz
+
+
+def acessorio_quepe():
+    raiz = G.vazio("Quepe_Dourado")
+    m = G.Malha("Quepe_Malha")
+    m.cilindro((0, 1.675, 0.0), 0.185, 0.12, "dourado", lados=12, raio2=0.205)
+    m.cilindro((0, 1.625, 0.0), 0.19, 0.03, "branco", lados=12)
+    m.caixa((0, 1.62, 0.16), (0.24, 0.025, 0.12), "preto", chanfro=0.01)                     # aba
+    m.esfera((0, 1.69, 0.19), (0.05, 0.04, 0.012), "amarelo", segs=6, aneis=4)                # emblema
+    m.criar(raiz)
+    return raiz
 
 
 def principal():
@@ -497,6 +550,13 @@ def principal():
         exportar([arm, malha], caminho, com_animacoes=False)
         caminhos.append((nome, caminho, altura))
 
+    # Acessorios (estaticos, mesmo pipeline dos props)
+    acessorios = []
+    for nome, fabrica in (("Lenco_Amarelo", acessorio_lenco), ("Quepe_Dourado", acessorio_quepe)):
+        limpar_cena()
+        raiz = fabrica()
+        acessorios.append((nome, G.exportar(raiz, PASTA_ACESSORIOS, nome)))
+
     # Animacoes: esqueleto puro com todas as acoes
     limpar_cena()
     arm = criar_esqueleto()
@@ -510,6 +570,12 @@ def principal():
         erros, tris = validar_personagem(caminho, altura)
         print(f"  {'OK ' if not erros else 'ERRO'} {nome:14s} {tris:5d} tri  {'; '.join(erros)}")
         falhas += len(erros)
+    print("VALIDACAO DOS ACESSORIOS:")
+    for nome, caminho in acessorios:
+        ok, tris, mn, mx = G.validar(caminho, {"Lenco_Amarelo": 0.17, "Quepe_Dourado": 0.15}[nome])
+        na_cabeca_ou_peito = mn[1] > 0.85
+        print(f"  {'OK ' if ok and na_cabeca_ou_peito else 'ERRO'} {nome:14s} {tris:5d} tri  y={mn[1]:.2f}..{mx[1]:.2f}")
+        falhas += 0 if ok and na_cabeca_ou_peito else 1
     print("VALIDACAO DAS ANIMACOES:")
     for e in erros_anim:
         print("  ERRO", e)
@@ -536,11 +602,11 @@ def previa_poses():
     spec.loader.exec_module(R)
     bpy.ops.wm.read_factory_settings(use_empty=True)
     G.MATERIAL = G.material_paleta(G.gerar_paleta())
-    R.preparar_render(1600, 520, amostras=32)
+    R.preparar_render(1700, 520, amostras=32)
     arm, malha = construir_personagem("Comissaria", *PERSONAGENS[0][1][:6], acessorio=PERSONAGENS[0][1][6])
     criar_animacoes(arm)
     poses = [("Parado", 1), ("Andar", 7), ("Correr", 5), ("Carregar", 7), ("Sentado", 1),
-             ("Panico", 3), ("Escorregar", 10), ("Falar", 7)]
+             ("PanicoSentado", 3), ("Panico", 3), ("Escorregar", 10), ("Falar", 7)]
     deps = bpy.context.evaluated_depsgraph_get()
     for i, (acao, quadro) in enumerate(poses):
         arm.animation_data.action = bpy.data.actions[acao]
@@ -550,7 +616,7 @@ def previa_poses():
         copia = bpy.data.objects.new(f"Pose_{acao}", bpy.data.meshes.new_from_object(avaliado))
         bpy.context.scene.collection.objects.link(copia)
         copia.matrix_world = malha.matrix_world.copy()
-        copia.location = U((i - 3.5) * 0.95, 0, 0)
+        copia.location = U((i - 4) * 0.9, 0, 0)
         copia.rotation_euler = (0, 0, math.radians(-35))   # 3/4 para ver o passo
     malha.hide_render = True
     bpy.ops.mesh.primitive_plane_add(size=30, location=(0, 0, 0))
@@ -565,5 +631,26 @@ def previa_poses():
     R.renderizar("poses.png")
 
 
+def previa_guarda_roupa():
+    """Uniformes e acessorios lado a lado (Tools/Blender/previas/uniformes.png)."""
+    spec = importlib.util.spec_from_file_location("previa", os.path.join(AQUI, "renderizar_previa.py"))
+    R = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(R)
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    R.preparar_render(1280, 640, amostras=32)
+    combos = [("Comissaria", None), ("Comissaria_Vermelho", "Lenco_Amarelo"), ("Comissaria_Verde", "Quepe_Dourado"),
+              ("Comissaria", "Quepe_Dourado")]
+    for i, (uniforme, acessorio) in enumerate(combos):
+        x = (i - 1.5) * 0.95
+        R.importar(os.path.join(PASTA_PERS, uniforme + ".fbx"), (x, 0, 0))
+        if acessorio:
+            R.importar(os.path.join(PASTA_ACESSORIOS, acessorio + ".fbx"), (x, 0, 0))
+    R.luz((1.5, 4, 4), energia=500, tamanho=4)
+    R.luz((-3, 3, 2), energia=150, tamanho=3)
+    R.camera((0, 1.3, 4.4), (0, 0.95, 0), lente=33)
+    R.renderizar("uniformes.png")
+
+
 if __name__ == "__main__" and sys.argv[-1] == "previa":
     previa_poses()
+    previa_guarda_roupa()

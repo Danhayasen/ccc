@@ -9,6 +9,8 @@ namespace SkyCrew.Domain.Persistence
         public float MasterVolume = 1f;
         public float MusicVolume = 0.8f;
         public float SfxVolume = 1f;
+        public float AmbienceVolume = 0.7f;
+        public float VoiceVolume = 1f;
         public float MouseSensitivity = 1f;
         public bool InvertY;
 
@@ -35,7 +37,7 @@ namespace SkyCrew.Domain.Persistence
     public sealed class SaveData
     {
         /// <summary>Versao atual do formato. Mudou o formato? Incremente e escreva a migracao.</summary>
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
 
         /// <summary>Quantas partidas recentes guardamos para evitar recompensa duplicada.</summary>
         public const int ProcessedMatchesKept = 32;
@@ -48,8 +50,13 @@ namespace SkyCrew.Domain.Persistence
         /// <summary>Partidas ja contabilizadas (mais antiga primeiro).</summary>
         public readonly List<string> ProcessedMatches = new List<string>();
 
-        /// <summary>Uniforme/acessorio equipado (deve estar desbloqueado).</summary>
-        public string EquippedOutfit = "uniforme_azul";
+        public const string DefaultUniform = "uniforme_azul";
+
+        /// <summary>Uniforme equipado (sempre um uniforme desbloqueado).</summary>
+        public string EquippedUniform = DefaultUniform;
+
+        /// <summary>Acessorio equipado ("" = nenhum; sempre desbloqueado).</summary>
+        public string EquippedAccessory = "";
 
         public static SaveData CreateDefault()
         {
@@ -66,7 +73,8 @@ namespace SkyCrew.Domain.Persistence
                 Version = Version,
                 Settings = Settings.Clone(),
                 Stats = Stats.Clone(),
-                EquippedOutfit = EquippedOutfit,
+                EquippedUniform = EquippedUniform,
+                EquippedAccessory = EquippedAccessory,
             };
             foreach (string u in Unlocks)
             {

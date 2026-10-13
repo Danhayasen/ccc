@@ -127,16 +127,35 @@ namespace SkyCrew.Domain.Progression
             return report;
         }
 
-        /// <summary>Equipa um uniforme/acessorio somente se ja estiver desbloqueado.</summary>
+        /// <summary>
+        /// Equipa um uniforme ou acessorio, somente se ja estiver desbloqueado.
+        /// "" desequipa o acessorio. Avioes e modificadores nao sao equipaveis aqui.
+        /// </summary>
         public static bool TryEquip(SaveData save, string unlockId)
         {
-            if (!save.Unlocks.Contains(unlockId))
+            if (unlockId == "")
+            {
+                save.EquippedAccessory = "";
+                return true;
+            }
+
+            var def = Find(unlockId);
+            if (def == null || !save.Unlocks.Contains(unlockId))
             {
                 return false;
             }
 
-            save.EquippedOutfit = unlockId;
-            return true;
+            switch (def.Category)
+            {
+                case UnlockCategory.Uniforme:
+                    save.EquippedUniform = unlockId;
+                    return true;
+                case UnlockCategory.Acessorio:
+                    save.EquippedAccessory = unlockId;
+                    return true;
+                default:
+                    return false;
+            }
         }
     }
 }

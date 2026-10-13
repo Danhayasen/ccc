@@ -29,6 +29,7 @@ namespace SkyCrew.Tests.PlayMode
         public IEnumerator SetUp()
         {
             SaveManager.StorageOverride = new SkyCrew.Domain.Persistence.MemorySaveStorage();
+            GameBootstrap.AutoStart = true; // sem menu principal nos testes
             _game = new GameObject("SkyCrew_Bootstrap_Teste").AddComponent<GameBootstrap>();
             yield return WaitFor(() => GameBootstrap.Session.State.Current == MatchState.Boarding, 10f);
             Assert.AreEqual(MatchState.Boarding, GameBootstrap.Session.State.Current, "a partida deveria chegar ao embarque");
@@ -44,6 +45,7 @@ namespace SkyCrew.Tests.PlayMode
 
             Time.timeScale = 1f;
             SaveManager.StorageOverride = null;
+            GameBootstrap.AutoStart = false;
             yield return null;
         }
 
@@ -123,6 +125,24 @@ namespace SkyCrew.Tests.PlayMode
             Assert.IsFalse(session.Events.IsActive(PrototypeScenario.EventSpill), "limpar encerra o evento");
             Assert.IsTrue(spill == null, "a mancha some quando o evento termina");
             Assert.AreSame(mop, interactor.Hands.Held, "o esfregao continua na mao");
+        }
+
+        [UnityTest]
+        public IEnumerator UniformeEAcessorioEquipados()
+        {
+            var save = _game.Save.Data;
+            save.Unlocks.Add("uniforme_vermelho");
+            save.Unlocks.Add("quepe_dourado");
+            Assert.IsTrue(SkyCrew.Domain.Progression.ProgressionService.TryEquip(save, "uniforme_vermelho"));
+            Assert.IsTrue(SkyCrew.Domain.Progression.ProgressionService.TryEquip(save, "quepe_dourado"));
+            _game.ApplyOutfit();
+            yield return null;
+            var player = _game.Player.transform;
+            var cap = SkyCrew.Characters.OutfitApplier.FindDeep(player, "Acessorio_quepe_dourado");
+            Assert.IsNotNull(cap, "o quepe deveria estar no personagem");
+            Assert.AreEqual(1, player.GetComponents<MonoBehaviour>().Count(m => m is SkyCrew.Characters.ICharacterAnimation),
+                            "uma unica animacao apos trocar de roupa");
+            Assert.Greater(cap.position.y, 1.3f, "o quepe fica na altura da cabeca");
         }
 
         [UnityTest]

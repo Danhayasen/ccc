@@ -21,7 +21,10 @@ namespace SkyCrew.Tests.EditMode
             d.Stats.BestScore = 4321;
             d.Stats.TotalScore = 20000;
             d.Unlocks.Add("lenco_amarelo");
-            d.EquippedOutfit = "lenco_amarelo";
+            d.Unlocks.Add("uniforme_vermelho");
+            d.EquippedUniform = "uniforme_vermelho";
+            d.EquippedAccessory = "lenco_amarelo";
+            d.Settings.VoiceVolume = 0.5f;
             d.ProcessedMatches.Add("m1");
             d.ProcessedMatches.Add("m2");
             return d;
@@ -40,7 +43,9 @@ namespace SkyCrew.Tests.EditMode
             Assert.AreEqual(4321, r.Data.Stats.BestScore);
             Assert.AreEqual(20000L, r.Data.Stats.TotalScore);
             CollectionAssert.AreEquivalent(original.Unlocks, r.Data.Unlocks);
-            Assert.AreEqual("lenco_amarelo", r.Data.EquippedOutfit);
+            Assert.AreEqual("uniforme_vermelho", r.Data.EquippedUniform);
+            Assert.AreEqual("lenco_amarelo", r.Data.EquippedAccessory);
+            Assert.AreEqual(0.5f, r.Data.Settings.VoiceVolume);
             CollectionAssert.AreEqual(new[] { "m1", "m2" }, r.Data.ProcessedMatches);
         }
 
@@ -95,6 +100,20 @@ namespace SkyCrew.Tests.EditMode
             Assert.IsTrue(r.Data.Unlocks.Contains("lenco_amarelo"));
         }
 
+        [TestCase("lenco_amarelo", "uniforme_azul", "lenco_amarelo")]
+        [TestCase("uniforme_vermelho", "uniforme_vermelho", "")]
+        public void MigraDaVersao2(string antigo, string uniforme, string acessorio)
+        {
+            string v2 = WithChecksum("SKYCREW_SAVE\nversao=2\nstats.voos=2\nstats.vitorias=1\n" +
+                                     "desbloqueios=uniforme_azul;lenco_amarelo;uniforme_vermelho\nequipado=" + antigo + "\n");
+            var r = SaveSerializer.Deserialize(v2);
+            Assert.AreEqual(SaveLoadStatus.Migrated, r.Status, r.Detail);
+            Assert.AreEqual(uniforme, r.Data.EquippedUniform);
+            Assert.AreEqual(acessorio, r.Data.EquippedAccessory);
+            Assert.AreEqual(2, r.Data.Stats.FlightsPlayed);
+            Assert.AreEqual(0.7f, r.Data.Settings.AmbienceVolume, "volume novo recebe o padrao");
+        }
+
         [Test]
         public void VersaoFuturaNaoEApagada()
         {
@@ -109,25 +128,29 @@ namespace SkyCrew.Tests.EditMode
         [Test]
         public void ValoresAbsurdosSaoLimitadosOuRecusados()
         {
-            string body = "SKYCREW_SAVE\nversao=2\nconfig.volume_geral=7\nconfig.sensibilidade_mouse=-3\nstats.voos=1\nstats.vitorias=1\n";
+            string body = "SKYCREW_SAVE\nversao=3\nconfig.volume_geral=7\nconfig.sensibilidade_mouse=-3\nstats.voos=1\nstats.vitorias=1\n";
             var r = SaveSerializer.Deserialize(WithChecksum(body));
             Assert.AreEqual(SaveLoadStatus.Ok, r.Status);
             Assert.AreEqual(1f, r.Data.Settings.MasterVolume);
             Assert.AreEqual(0.1f, r.Data.Settings.MouseSensitivity);
 
-            string inconsistent = "SKYCREW_SAVE\nversao=2\nstats.voos=1\nstats.vitorias=5\n";
+            string inconsistent = "SKYCREW_SAVE\nversao=3\nstats.voos=1\nstats.vitorias=5\n";
             Assert.AreEqual(SaveLoadStatus.Corrupted, SaveSerializer.Deserialize(WithChecksum(inconsistent)).Status);
 
-            string nan = "SKYCREW_SAVE\nversao=2\nconfig.volume_geral=NaN\n";
+            string nan = "SKYCREW_SAVE\nversao=3\nconfig.volume_geral=NaN\n";
             Assert.AreEqual(SaveLoadStatus.Corrupted, SaveSerializer.Deserialize(WithChecksum(nan)).Status);
         }
 
         [Test]
         public void ItemEquipadoBloqueadoVoltaAoPadrao()
         {
-            string body = "SKYCREW_SAVE\nversao=2\ndesbloqueios=uniforme_azul\nequipado=quepe_dourado\n";
+            string body = "SKYCREW_SAVE\nversao=3\ndesbloqueios=uniforme_azul\nequipado.uniforme=uniforme_verde\nequipado.acessorio=quepe_dourado\n";
             var r = SaveSerializer.Deserialize(WithChecksum(body));
-            Assert.AreEqual("uniforme_azul", r.Data.EquippedOutfit);
+            Assert.AreEqual("uniforme_azul", r.Data.EquippedUniform);
+            Assert.AreEqual("", r.Data.EquippedAccessory);
+
+            string wrongCategory = "SKYCREW_SAVE\nversao=3\ndesbloqueios=uniforme_azul;lenco_amarelo\nequipado.uniforme=lenco_amarelo\n";
+            Assert.AreEqual("uniforme_azul", SaveSerializer.Deserialize(WithChecksum(wrongCategory)).Data.EquippedUniform);
         }
 
         [Test]
@@ -257,9 +280,17 @@ namespace SkyCrew.Tests.EditMode
         {
             var save = SaveData.CreateDefault();
             Assert.IsFalse(ProgressionService.TryEquip(save, "uniforme_verde"));
-            Assert.AreEqual("uniforme_azul", save.EquippedOutfit);
+            Assert.AreEqual("uniforme_azul", save.EquippedUniform);
             save.Unlocks.Add("uniforme_verde");
+            save.Unlocks.Add("quepe_dourado");
             Assert.IsTrue(ProgressionService.TryEquip(save, "uniforme_verde"));
+            Assert.IsTrue(ProgressionService.TryEquip(save, "quepe_dourado"));
+            Assert.AreEqual("uniforme_verde", save.EquippedUniform);
+            Assert.AreEqual("quepe_dourado", save.EquippedAccessory);
+            Assert.IsFalse(ProgressionService.TryEquip(save, "aviao_prototipo"), "aviao nao e roupa");
+            Assert.IsTrue(ProgressionService.TryEquip(save, ""));
+            Assert.AreEqual("", save.EquippedAccessory);
+            Assert.AreEqual("uniforme_verde", save.EquippedUniform);
         }
 
         [Test]

@@ -7,7 +7,7 @@ import os
 import sys
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 ART = os.path.normpath(os.path.join(AQUI, "..", "..", "Assets", "_Project", "Art"))
@@ -23,12 +23,16 @@ def U(x, y, z):
 
 def importar(caminho, pos, rot_y=0.0):
     antes = set(bpy.data.objects)
-    bpy.ops.import_scene.fbx(filepath=caminho, axis_forward="-Z", axis_up="Y", bake_space_transform=True)
+    # Modelos com esqueleto sao exportados SEM "Apply Transform": a conversao de eixos fica no no raiz.
+    tem_esqueleto = "Personagens" in caminho or "Animations" in caminho
+    bpy.ops.import_scene.fbx(filepath=caminho, axis_forward="-Z", axis_up="Y", bake_space_transform=not tem_esqueleto)
     novos = [o for o in bpy.data.objects if o not in antes]
     raizes = [o for o in novos if o.parent is None]
+    bpy.context.view_layer.update()
     for r in raizes:
-        r.location = U(*pos)
-        r.rotation_euler = (0, 0, math.radians(rot_y))
+        # Compoe (nao substitui) a transformacao: preserva a conversao de eixos do proprio FBX.
+        r.matrix_world = (Matrix.Translation(U(*pos)) @ Matrix.Rotation(math.radians(rot_y), 4, "Z")
+                          @ r.matrix_world)
     # textura: o FBX guarda so o nome do arquivo (como na Unity)
     for o in novos:
         for slot in getattr(o, "material_slots", []):

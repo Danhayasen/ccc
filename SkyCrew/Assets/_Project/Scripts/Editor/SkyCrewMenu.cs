@@ -76,7 +76,8 @@ namespace SkyCrew.EditorTools
                 "Cabine/Segmento", "Cabine/Parede_Frente", "Cabine/Parede_Fundo", "Cabine/Poltrona", "Cabine/Bagageiro",
                 "Cabine/Cozinha", "Cabine/Banheiro", "Props/Mala", "Props/Garrafa", "Props/Lixo", "Props/Lixeira",
                 "Props/Lanche", "Props/Cobertor", "Props/Esfregao", "Props/Carrinho", "Props/Mancha",
-                "Personagens/Comissaria", "Personagens/Passageiro_1", "Personagens/Passageiro_2",
+                "Personagens/Comissaria", "Personagens/Comissaria_Vermelho", "Personagens/Comissaria_Verde",
+                "Acessorios/Lenco_Amarelo", "Acessorios/Quepe_Dourado", "Personagens/Passageiro_1", "Personagens/Passageiro_2",
                 "Personagens/Passageiro_3", "Personagens/Passageiro_4",
             };
 
@@ -140,8 +141,8 @@ namespace SkyCrew.EditorTools
 
             int clips = AssetDatabase.LoadAllAssetsAtPath(SkyCrewAnimatorBuilder.AnimationFbx)
                                      .OfType<AnimationClip>().Count(c => !c.name.StartsWith("__preview__"));
-            report.AppendLine($"  {(clips >= 9 ? "OK" : "ATENCAO")}  Animacoes: {clips} clipes em {SkyCrewAnimatorBuilder.AnimationFbx}");
-            if (clips < 9) problems++;
+            report.AppendLine($"  {(clips >= 10 ? "OK" : "ATENCAO")}  Animacoes: {clips} clipes em {SkyCrewAnimatorBuilder.AnimationFbx}");
+            if (clips < 10) problems++;
             bool controller = Resources.Load<RuntimeAnimatorController>(SkyCrew.Characters.CharacterAnimation.ControllerResource) != null;
             report.AppendLine($"  {(controller ? "OK" : "ATENCAO")}  Animator Controller {(controller ? "gerado" : "ausente: menu SkyCrew > 5")}");
             if (!controller) problems++;
@@ -192,7 +193,7 @@ namespace SkyCrew.EditorTools
             importer.importCameras = false;
             importer.importLights = false;
             bool isAnimationLibrary = assetPath.EndsWith(SkyCrewAnimatorBuilder.AnimationFbx.Substring("Assets".Length));
-            bool isCharacter = assetPath.Contains("/Art/Characters/");
+            bool isCharacter = assetPath.Contains("/Art/Characters/") && !assetPath.Contains("/Acessorios/");
             // Esqueleto generico: as animacoes de SkyCrew_Animacoes.fbx tocam em todos os personagens
             // porque os ossos e caminhos sao identicos (mesmo script de geracao).
             importer.animationType = isAnimationLibrary || isCharacter
