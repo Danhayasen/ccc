@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avião 3D</title>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&family=Inter:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --fundo-topo: #8fd3ff;
+            --fundo-baixo: #fdf1d6;
+            --painel: rgba(20, 33, 66, 0.82);
+            --texto: #ffffff;
+            --destaque: #1875e8;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(var(--fundo-topo), var(--fundo-baixo));
+            color: var(--texto);
+        }
+
+        #palco { position: fixed; inset: 0; }
+
+        .painel {
+            position: fixed;
+            left: 16px;
+            right: 16px;
+            bottom: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .painel button {
+            pointer-events: auto;
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 15px;
+            padding: 10px 16px;
+            border: 3px solid #0d1b38;
+            border-radius: 14px;
+            background: var(--painel);
+            color: var(--texto);
+            cursor: pointer;
+            box-shadow: 0 4px 0 #0d1b38;
+            transition: transform 0.08s;
+        }
+
+        .painel button:active { transform: translateY(3px); box-shadow: 0 1px 0 #0d1b38; }
+        .painel button.ativo { background: var(--destaque); }
+        .painel button.perigo { background: #e0574f; }
+
+        h1 {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            margin: 0;
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: clamp(20px, 4vw, 32px);
+            color: #0d1b38;
+            text-shadow: 2px 2px 0 #fff;
+        }
+
+        .rotulo {
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 13px;
+            padding: 4px 10px;
+            border-radius: 10px;
+            border: 2px solid #0d1b38;
+            background: #fff;
+            color: #0d1b38;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 600px) {
+            .rotulo { font-size: 10px; padding: 2px 6px; }
+            .painel button { font-size: 13px; padding: 8px 12px; }
+        }
+
+        #carregando {
+            position: fixed;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 24px;
+            color: #0d1b38;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div id="palco"></div>
+    <div id="carregando">Abastecendo o avião...</div>
+    <h1>Avião 3D</h1>
+    <div class="painel">
+        <button data-camera="tres_quartos" class="ativo">3/4</button>
+        <button data-camera="lateral">Lateral</button>
+        <button data-camera="frontal">Frontal</button>
+        <button data-camera="traseira">Traseira</button>
+        <button data-camera="superior">Superior</button>
+        <button id="corte">Corte interno</button>
+        <button id="turbulencia" class="perigo">Turbulência!</button>
+        <button id="guardar">Guardar malas</button>
+    </div>
+    <script type="module" src="viewer.js"></script>
+</body>
+
+</html>
