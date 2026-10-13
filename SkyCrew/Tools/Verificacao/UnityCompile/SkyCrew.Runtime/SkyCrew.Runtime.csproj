@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Checagem de compilacao do codigo Unity (Assets/_Project/Scripts/Runtime) fora do Editor. -->
+  <Import Project="../UnityRefs.props" />
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- CS0649: a Unity suprime este aviso em campos [SerializeField] -->
+    <NoWarn>$(NoWarn);MSB3277;CS0649</NoWarn>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>SkyCrew.Runtime</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../../Assets/_Project/Scripts/Runtime/**/*.cs" />
+    <Compile Include="../../Stubs/PackageStubs.cs" />
+    <ProjectReference Include="../../Domain/SkyCrew.Domain.csproj" />
+  </ItemGroup>
+</Project>

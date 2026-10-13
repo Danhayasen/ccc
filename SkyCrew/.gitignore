@@ -1,0 +1,25 @@
+# Unity
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+*.csproj
+*.sln
+*.suo
+*.user
+*.pidb
+*.booproj
+.vs/
+.idea/
+# Harness de verificacao (.NET)
+/Tools/Verificacao/**/bin/
+/Tools/Verificacao/**/obj/
+/Tools/Verificacao/refs/
+!/Tools/Verificacao/**/*.csproj
+
+# Python
+__pycache__/
