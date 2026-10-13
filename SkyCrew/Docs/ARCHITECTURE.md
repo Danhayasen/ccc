@@ -175,3 +175,38 @@ As medidas vêm de `CabinLayout`:
 - banheiro no fundo (z de −3,4 a −5,2).
 
 O visual vem de módulos FBX e os colisores são caixas definidas em código. Trocar um modelo não altera a física nem a navegação. A NavMesh é gerada a partir dos **colisores** com raio de agente de 0,22 m. O vão entre fileiras fica fora da malha, e o passageiro desliza do corredor até a poltrona.
+
+## Salvamento e progressão
+
+- `SaveData` guarda configurações, estatísticas permanentes, desbloqueios, item equipado e os ids das últimas 32 partidas contabilizadas. Não guarda estado de partida nem segredos (há teste para isso).
+- `SaveSerializer` grava texto `chave=valor` versionado, com cultura invariante e checksum FNV-1a no fim. A leitura:
+  - converte arquivos v1 (`Migrated`);
+  - limita valores absurdos;
+  - recusa arquivo inconsistente ou corrompido.
+- `SaveService` sobre `ISaveStorage` (`FileSaveStorage` na Unity, gravação temporária e troca atômica; `MemorySaveStorage` nos testes).
+  - Arquivo ausente vira padrão.
+  - Arquivo corrompido ou de versão futura vira padrão, com o original copiado para `skycrew.save.corrompido`.
+  - Falha de disco devolve `false` sem derrubar o jogo.
+- `ProgressionService.Apply(save, resultados, idDaPartida)` é **idempotente por id de partida**: cada viagem recebe um GUID ao embarcar. Ele soma voos, vitórias, estrelas (só em vitória), tarefas, pontos e recorde, e libera itens do catálogo:
+
+| Item | Exige |
+|---|---|
+| Uniforme azul, Avião SkyCrew 1 | já liberados |
+| Lenço amarelo | 2 estrelas |
+| Uniforme vermelho | 5 estrelas |
+| Quepe dourado | 9 estrelas |
+| Modificador: turbulência dobrada | 12 estrelas e 3 vitórias |
+| Uniforme verde | 15 estrelas |
+| Avião SkyCrew 2 | 24 estrelas e 6 vitórias |
+
+## Personagens e animação
+
+- **Esqueleto** com nomes do padrão Humanoid da Unity: `Hips, Spine, Chest, Neck, Head, {Left,Right}{UpperLeg,LowerLeg,Foot,UpperArm,LowerArm,Hand}`.
+- **Skinning rígido por segmento:** cada vértice tem peso 1 num osso. É o visual de "boneco articulado", sem deformação estranha nas juntas.
+- **Arquivos:** os personagens ficam em `Art/Characters/.../<Nome>.fbx` (malha + esqueleto, rig *Generic*). As animações ficam em `Art/Animations/SkyCrew_Animacoes.fbx` (só esqueleto + 9 ações). Como os caminhos dos ossos são idênticos, as animações servem para todos.
+- **Animator** gerado pelo menu *SkyCrew > 5*:
+  - parâmetros `Speed`, `Seated`, `Carrying`, `Reacting`, `Talk` e `Slip`;
+  - blend trees de locomoção (parado, andar, correr) e de carregar;
+  - estados sentado, pânico (de qualquer estado, sem reiniciar a si mesmo), escorregar e falar.
+- **Em tempo de execução:** `CharacterAnimation.Attach` usa o Animator se o modelo e o controller existirem. Senão, cai na animação procedural (`ICharacterAnimation` é a interface comum). O "squash and stretch" é aplicado por cima nos dois casos.
+- **Sentado:** a raiz do passageiro fica no piso, no centro da poltrona, e a animação abaixa o quadril de 0,56 m para 0,46 m (o estofado fica a 0,47 m).

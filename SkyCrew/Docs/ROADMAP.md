@@ -22,16 +22,20 @@ turbulência, vitória/derrota, pausa e resultados.
 - mancha com esfregão, carrinho puxável, geladeira com conserto;
 - teste de resistência com 40 viagens.
 
+## Adiantado das fases seguintes (código pronto, falta validação no Editor)
+- **Salvamento e progressão** (Parte 16): testado.
+- **Fase 3 (parcial):** personagens com esqueleto, 9 animações, Animator gerado no Editor.
+  - Falta: variações modulares de roupa/cabelo, Animation Rigging para as mãos e LOD.
+
 ## Próximas tarefas, em ordem
 1. **Validação no Editor** das Fases 1 e 2 (TEST_PLAN.md) e correções.
 2. Ferramenta de Editor que gera **prefabs** a partir dos módulos (substituir `Resources` aos poucos).
-3. **Fase 3 — produção 3D:**
-   - rig humanoide com skinning (Blender);
-   - animações de andar, sentar, segurar, reagir e escorregar;
+3. **Fase 3 — produção 3D (restante):**
+   - pânico sentado;
    - Animation Rigging para as mãos;
    - variações modulares de roupa, cabelo e acessórios;
    - LOD.
-4. **Fase 4 — aeronave completa:** primeira classe, mais fileiras, portas de serviço, área de carga com animais, progressão inicial e salvamento.
+4. **Fase 4 — aeronave completa:** primeira classe, mais fileiras, portas de serviço, área de carga com animais, tela de desbloqueios e configurações.
 5. **Fase 5 — multiplayer:**
    - Netcode for GameObjects com o host rodando o `MatchSession`;
    - `Try*` e sinais como ServerRpc;

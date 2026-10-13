@@ -29,7 +29,7 @@ namespace SkyCrew.PassengerAI
 
         private NavMeshAgent _agent;
         private AisleTrafficCoordinator _traffic;
-        private ProceduralCharacterAnimator _animator;
+        private ICharacterAnimation _animator;
         private BodyMode _mode = BodyMode.Standing;
         private DestinationKind _destination;
         private Vector3 _seatPosition;
@@ -48,7 +48,7 @@ namespace SkyCrew.PassengerAI
         public string ModeName => _mode.ToString();
 
         public void Initialize(PassengerBrain brain, string displayName, string seatId, Vector3 lavatoryPoint,
-                               AisleTrafficCoordinator traffic, ProceduralCharacterAnimator animator)
+                               AisleTrafficCoordinator traffic, ICharacterAnimation animator)
         {
             Brain = brain;
             DisplayName = displayName;

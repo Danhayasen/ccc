@@ -7,7 +7,7 @@ namespace SkyCrew.Characters
     /// direto nos ossos-objeto do modelo (Perna_E, Braco_D, Cabeca...). Sera substituida por
     /// rig + Animator na Fase 3; os parametros publicos ja seguem os nomes previstos no Animator.
     /// </summary>
-    public sealed class ProceduralCharacterAnimator : MonoBehaviour
+    public sealed class ProceduralCharacterAnimator : MonoBehaviour, ICharacterAnimation
     {
         [SerializeField] private float _strideFrequency = 7f;
         [SerializeField] private float _strideAngle = 32f;
@@ -30,11 +30,12 @@ namespace SkyCrew.Characters
             _visual = visual;
             _visualRestPos = visual.localPosition;
             _visualRestScale = visual.localScale;
-            _legL = Find(visual, "Perna_E");
-            _legR = Find(visual, "Perna_D");
-            _armL = Find(visual, "Braco_E");
-            _armR = Find(visual, "Braco_D");
-            _head = Find(visual, "Cabeca");
+            // Partes rigidas (modelo antigo/boneco provisorio) ou ossos do esqueleto Humanoid.
+            _legL = Find(visual, "Perna_E") ?? Find(visual, "LeftUpperLeg");
+            _legR = Find(visual, "Perna_D") ?? Find(visual, "RightUpperLeg");
+            _armL = Find(visual, "Braco_E") ?? Find(visual, "LeftUpperArm");
+            _armR = Find(visual, "Braco_D") ?? Find(visual, "RightUpperArm");
+            _head = Find(visual, "Cabeca") ?? Find(visual, "Head");
             if (_legL) _legLRest = _legL.localRotation;
             if (_legR) _legRRest = _legR.localRotation;
             if (_armL) _armLRest = _armL.localRotation;
@@ -59,6 +60,8 @@ namespace SkyCrew.Characters
         public void Squash(float amount = 0.25f) => _squash = Mathf.Max(_squash, amount);
 
         public void Talk() => _talkTime = 0.6f;
+
+        public void Slip() => Squash(0.35f);
 
         private void LateUpdate()
         {

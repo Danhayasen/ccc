@@ -21,9 +21,13 @@
 
 ## Limitações conhecidas do protótipo
 - Interface **IMGUI provisória**: sem menu principal, seleção de personagem, lobby ou configurações.
-- **Animação procedural provisória**: sem rig e sem Animator.
+- **Animação:** personagens com esqueleto e 9 clipes, mas o Animator Controller só existe depois de rodar *SkyCrew > 5* no Editor. Até lá vale a animação procedural de reserva, que no modelo com esqueleto só gira quadril e braços de forma aproximada.
+- **Rig Generic, não Humanoid:** os nomes já seguem o padrão Humanoid, mas a pose de repouso é com braços para baixo. Para usar animações de outras fontes (retargeting), configure Humanoid e use *Enforce T-Pose* no Avatar.
+- **Pânico sentado:** o passageiro "levanta" na poltrona (pode atravessar o encosto da frente). Falta uma variante de pânico sentado.
+- **Orientação do FBX com esqueleto:** foi conferida só no Blender. Se o personagem vier deitado, marque *Bake Axis Conversion* no importador.
 - **Sem áudio.**
-- **Sem multiplayer** e sem salvamento.
+- **Sem multiplayer.**
+- **Configurações:** sensibilidade, inverter Y e volume geral são lidos do save, mas ainda não há tela para alterá-los.
 - `ItemDispenser` limita a 5 garrafas soltas ao mesmo tempo. Garrafas largadas pelo chão contam até sumirem.
 - O passageiro "desliza" para dentro da poltrona (o vão entre fileiras não é navegável de propósito).
 - Desempenho **não medido**.

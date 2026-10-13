@@ -171,6 +171,13 @@ namespace SkyCrew.UI
                     break;
                 case MatchState.Ready:
                     DrawCenterMessage("Prepare-se para o embarque!");
+                    if (_game.Save.LoadStatus == SkyCrew.Domain.Persistence.SaveLoadStatus.Corrupted)
+                    {
+                        GUI.Label(new Rect(0, Screen.height * 0.35f + 90f * s, Screen.width, 30f * s),
+                                  "O progresso salvo estava danificado: começando do zero (cópia guardada).",
+                                  new GUIStyle(_small) { alignment = TextAnchor.MiddleCenter });
+                    }
+
                     break;
                 case MatchState.Results:
                 case MatchState.Failed:
@@ -414,10 +421,37 @@ namespace SkyCrew.UI
             GUILayout.Label($"Tarefas (com bônus de resposta rápida): +{b.TaskRewards}   Penalidades: -{b.TaskPenalties}", _text);
             GUILayout.Label($"Tarefas concluídas: {r.TasksCompleted}   Falhas: {r.TasksFailed}", _text);
             GUILayout.Label($"Pontuação final: {b.Total}", _title);
+            DrawProgress(s);
             GUILayout.Space(16f * s);
             if (GUILayout.Button("Jogar de novo", _button)) _game.RequestRestart();
             if (GUILayout.Button("Sair", _button)) _game.QuitToMenu();
             GUILayout.EndArea();
+        }
+
+        private void DrawProgress(float s)
+        {
+            var save = _game != null ? _game.Save : null;
+            if (save == null)
+            {
+                return;
+            }
+
+            var stats = save.Data.Stats;
+            var report = save.LastReport;
+            string best = report != null && report.NewBestScore ? "  — novo recorde!" : "";
+            GUILayout.Label($"Estrelas no total: {stats.TotalStars}   Voos: {stats.FlightsWon}/{stats.FlightsPlayed}   Recorde: {stats.BestScore}{best}", _small);
+            if (report != null)
+            {
+                foreach (var unlock in report.NewUnlocks)
+                {
+                    GUILayout.Label("Desbloqueado: " + unlock.DisplayName, new GUIStyle(_text) { normal = { textColor = MaterialLibrary.Amarelo } });
+                }
+            }
+
+            if (!string.IsNullOrEmpty(save.LastSaveError))
+            {
+                GUILayout.Label("Não foi possível salvar o progresso: " + save.LastSaveError, _small);
+            }
         }
 
         private void OnDestroy()

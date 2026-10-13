@@ -628,14 +628,9 @@ def principal():
         ("Props", "Esfregao", prop_esfregao, 1.2),
         ("Props", "Carrinho", prop_carrinho, 1.11),
         ("Props", "Mancha", prop_mancha, 0.011),
-        ("Personagens", "Comissaria",
-         lambda: personagem("Comissaria", "pele_1", "azul_escuro", "branco", "azul_escuro",
-                            "cabelo_castanho", "coque", "lenco"), 1.76),
     ]
-    for nome, pele, roupa, det, calca, cab, estilo, acc in VARIANTES:
-        itens.append(("Personagens", nome,
-                      (lambda n=nome, a=(pele, roupa, det, calca, cab, estilo, acc):
-                       personagem(n, *a[:6], acessorio=a[6])), 1.7))
+    # Personagens: gerados com esqueleto e animacoes por gerar_personagens.py (Fase 3).
+    # A funcao personagem() acima continua aqui so como referencia do boneco rigido da Fase 1.
 
     caminhos = []
     for pasta, nome, fabrica, altura in itens:

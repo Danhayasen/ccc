@@ -54,9 +54,12 @@ namespace SkyCrew.Aircraft
                    && row >= 1 && row <= Rows;
         }
 
-        /// <summary>Onde o passageiro senta (quadril).</summary>
+        /// <summary>
+        /// Onde fica a raiz (pes) do passageiro sentado: no piso, no centro da poltrona.
+        /// A animacao "Sentado" abaixa o quadril (0,56 m -> 0,46 m) ate o estofado (0,47 m).
+        /// </summary>
         public static Vector3 SeatPosition(int row, int letterIndex)
-            => new Vector3(SeatX(letterIndex), SeatHeight, RowZ(row) - 0.05f);
+            => new Vector3(SeatX(letterIndex), 0f, RowZ(row) - 0.05f);
 
         /// <summary>Ponto do corredor ao lado da fileira (destino de navegacao).</summary>
         public static Vector3 AislePointForRow(int row) => new Vector3(0f, 0f, RowZ(row));

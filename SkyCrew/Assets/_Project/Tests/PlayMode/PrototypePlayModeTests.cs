@@ -28,6 +28,7 @@ namespace SkyCrew.Tests.PlayMode
         [UnitySetUp]
         public IEnumerator SetUp()
         {
+            SaveManager.StorageOverride = new SkyCrew.Domain.Persistence.MemorySaveStorage();
             _game = new GameObject("SkyCrew_Bootstrap_Teste").AddComponent<GameBootstrap>();
             yield return WaitFor(() => GameBootstrap.Session.State.Current == MatchState.Boarding, 10f);
             Assert.AreEqual(MatchState.Boarding, GameBootstrap.Session.State.Current, "a partida deveria chegar ao embarque");
@@ -42,6 +43,7 @@ namespace SkyCrew.Tests.PlayMode
             }
 
             Time.timeScale = 1f;
+            SaveManager.StorageOverride = null;
             yield return null;
         }
 

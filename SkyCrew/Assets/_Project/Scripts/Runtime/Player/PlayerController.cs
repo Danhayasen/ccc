@@ -16,14 +16,14 @@ namespace SkyCrew.Player
         private ThirdPersonCamera _camera;
         private Interactor _interactor;
         private CarrySocket _hands;
-        private ProceduralCharacterAnimator _animator;
+        private ICharacterAnimation _animator;
 
         public bool ControlsEnabled { get; set; } = true;
         public PlayerMotor Motor => _motor;
         public Interactor Interactor => _interactor;
         public ThirdPersonCamera Camera => _camera;
 
-        public void Initialize(IPlayerCommandSource input, ThirdPersonCamera cameraRig, ProceduralCharacterAnimator animator)
+        public void Initialize(IPlayerCommandSource input, ThirdPersonCamera cameraRig, ICharacterAnimation animator)
         {
             _input = input;
             _camera = cameraRig;
@@ -32,6 +32,7 @@ namespace SkyCrew.Player
             _interactor = GetComponent<Interactor>();
             _hands = GetComponent<CarrySocket>();
             _motor.Landed += () => _animator?.Squash(0.3f);
+            _motor.Stumbled += () => _animator?.Slip();
         }
 
         private void Update()

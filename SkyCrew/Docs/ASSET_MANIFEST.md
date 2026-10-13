@@ -22,11 +22,12 @@ licenciado foi importado.
 | Esfregão | `.../Props/Esfregao.fbx` | 148 | 0,32×1,20×0,10 | base | idem |
 | Carrinho de serviço | `.../Props/Carrinho.fbx` | 340 | 0,42×1,11×0,87 | piso, centro (alça em −Z) | idem |
 | Mancha de suco | `.../Props/Mancha.fbx` | 84 | 0,79×0,01×0,59 | piso, centro | idem |
-| Comissária | `Art/Characters/Resources/SkyCrew/Personagens/Comissaria.fbx` | 1600 | 0,72×1,72×0,61 | entre os pés | idem |
-| Passageiro 1 (boné) | `.../Personagens/Passageiro_1.fbx` | 1512 | 0,72×1,73×0,59 | entre os pés | idem |
-| Passageiro 2 (bolsa) | `.../Personagens/Passageiro_2.fbx` | 1432 | 0,72×1,77×0,59 | entre os pés | idem |
-| Passageiro 3 (óculos) | `.../Personagens/Passageiro_3.fbx` | 1452 | 0,72×1,68×0,54 | entre os pés | idem |
-| Passageiro 4 (coque) | `.../Personagens/Passageiro_4.fbx` | 1452 | 0,72×1,72×0,61 | entre os pés | idem |
+| Comissária | `Art/Characters/Resources/SkyCrew/Personagens/Comissaria.fbx` | 1936 | 0,72×1,72×0,61 | entre os pés | `gerar_personagens.py` |
+| Passageiro 1 (boné) | `.../Personagens/Passageiro_1.fbx` | 1848 | ~0,7×1,73×0,6 | entre os pés | idem |
+| Passageiro 2 (bolsa) | `.../Personagens/Passageiro_2.fbx` | 1768 | ~0,7×1,77×0,6 | entre os pés | idem |
+| Passageiro 3 (óculos) | `.../Personagens/Passageiro_3.fbx` | 1788 | ~0,7×1,68×0,55 | entre os pés | idem |
+| Passageiro 4 (coque) | `.../Personagens/Passageiro_4.fbx` | 1788 | ~0,7×1,72×0,6 | entre os pés | idem |
+| Biblioteca de animações (9 clipes, 24 fps) | `Art/Animations/SkyCrew_Animacoes.fbx` | — | esqueleto | — | idem |
 | Textura de paleta | `Art/Textures/SkyCrew_Paleta.png` | — | 256×256 px, 36 cores | — | idem |
 | Prévias | `Tools/Blender/previas/*.png` | — | — | — | `renderizar_previa.py` (Cycles) |
 
@@ -39,9 +40,22 @@ Feitas reimportando o FBX no Blender com os mesmos eixos da exportação (`gerar
 
 A orientação foi conferida visualmente: a prévia *elenco* tem a câmera em +Z da Unity e mostra o rosto dos personagens.
 
-## Personagens: hierarquia (rig provisório)
-`<Raiz>` com filhos diretos `Corpo`, `Cabeca`, `Braco_E`, `Braco_D`, `Perna_E` e `Perna_D`, cada um com pivô na
-articulação. O `ProceduralCharacterAnimator` gira essas partes. **Não há esqueleto nem skinning:** isso é da Fase 3.
+## Personagens: esqueleto e animações (Fase 3)
+- `Armature` com 17 ossos de nomes Humanoid e uma malha com skinning rígido (peso 1 por vértice).
+- Exportados **sem** *Apply Transform* (ele não é confiável com esqueletos). A conversão de eixos fica num nó filho, e a raiz do prefab segue sem rotação.
+- Clipes:
+
+| Clipe | Quadros | Loop |
+|---|---|---|
+| Parado | 49 | sim |
+| Andar | 25 | sim |
+| Correr | 17 | sim |
+| Carregar | 25 | sim |
+| CarregarParado | 25 | sim |
+| Sentado | 49 | sim |
+| Pânico | 17 | sim |
+| Escorregar | 30 | não |
+| Falar | 25 | não |
 
 ## Ainda pendente
 - Conferência no Editor da Unity: importação, material URP com a textura e orientação.

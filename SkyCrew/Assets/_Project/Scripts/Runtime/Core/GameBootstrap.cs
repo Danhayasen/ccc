@@ -47,12 +47,16 @@ namespace SkyCrew.Core
         private GameHud _hud;
         private float _readyTimer;
         private bool _restartRequested;
+        private string _matchId;
 
         /// <summary>Sessao atual (regras do jogo). null fora da cena do prototipo.</summary>
         public static MatchSession Session { get; private set; }
 
         public static PrototypeScenario Scenario { get; private set; }
         public static GameBootstrap Instance { get; private set; }
+
+        /// <summary>Progresso permanente (carregado ao iniciar; salvo ao fim de cada partida).</summary>
+        public SaveManager Save { get; private set; }
 
         public IReadOnlyList<PassengerController> Passengers => _passengers;
         public PlayerController Player => _player;
@@ -69,6 +73,23 @@ namespace SkyCrew.Core
             Session.RegisterInitStep(StepNavMesh);
             Session.RegisterInitStep(StepPlayer);
             Session.RegisterInitStep(StepPassengers);
+
+            Save = SaveManager.CreateDefault();
+            // Cada viagem tem um id; o resultado so e contabilizado uma vez por id.
+            Session.State.Changed += (previous, next) =>
+            {
+                if (next == MatchState.Boarding)
+                {
+                    _matchId = System.Guid.NewGuid().ToString("N");
+                }
+            };
+            Session.ResultsReady += results =>
+            {
+                if (_matchId != null)
+                {
+                    Save.ApplyMatch(results, _matchId);
+                }
+            };
         }
 
         private void Start()
@@ -118,8 +139,7 @@ namespace SkyCrew.Core
             _input = go.AddComponent<PlayerInputReader>();
 
             var visual = CharacterFactory.SpawnVisual(CharacterFactory.Crew, go.transform);
-            var animator = go.AddComponent<ProceduralCharacterAnimator>();
-            animator.Bind(visual);
+            var animator = CharacterAnimation.Attach(go, visual);
 
             var camGo = new GameObject("Camera_Principal");
             camGo.tag = "MainCamera";
@@ -129,6 +149,9 @@ namespace SkyCrew.Core
             camGo.AddComponent<AudioListener>();
             _cameraRig = camGo.AddComponent<ThirdPersonCamera>();
             _cameraRig.SetTarget(go.transform, 180f);
+            _cameraRig.Sensitivity = Save.Data.Settings.MouseSensitivity;
+            _cameraRig.InvertY = Save.Data.Settings.InvertY;
+            AudioListener.volume = Save.Data.Settings.MasterVolume;
 
             _player = go.AddComponent<PlayerController>();
             _player.Initialize(_input, _cameraRig, animator);
@@ -159,8 +182,7 @@ namespace SkyCrew.Core
                 go.AddComponent<PassengerInteractable>();
                 var visual = CharacterFactory.SpawnVisual(
                     CharacterFactory.PassengerVariants[variant % CharacterFactory.PassengerVariants.Length], go.transform, variant);
-                var animator = go.AddComponent<ProceduralCharacterAnimator>();
-                animator.Bind(visual);
+                var animator = CharacterAnimation.Attach(go, visual);
                 controller.Initialize(brain, spec.Name, spec.SeatId, CabinLayout.LavatoryPoint, _traffic, animator);
                 _passengers.Add(controller);
                 variant++;

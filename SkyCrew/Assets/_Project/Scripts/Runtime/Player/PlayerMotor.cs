@@ -45,6 +45,9 @@ namespace SkyCrew.Player
         /// <summary>Disparado ao tocar o chao depois de cair (para squash na animacao).</summary>
         public event System.Action Landed;
 
+        /// <summary>Disparado ao tropecar/escorregar (para a animacao).</summary>
+        public event System.Action Stumbled;
+
         private void Awake()
         {
             _controller = GetComponent<CharacterController>();
@@ -116,6 +119,7 @@ namespace SkyCrew.Player
             push.y = 0f;
             _stumbleVelocity = Vector3.ClampMagnitude(push, 3f);
             _stumbleTime = Mathf.Clamp(seconds, 0f, 1.5f);
+            Stumbled?.Invoke();
         }
 
         public void Teleport(Vector3 position, Quaternion rotation)

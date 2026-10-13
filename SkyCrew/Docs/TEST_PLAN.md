@@ -2,7 +2,7 @@
 
 ## Automáticos
 
-### EditMode (regras, `Tests/EditMode`) — 93 testes
+### EditMode (regras, `Tests/EditMode`) — 113 testes
 Rodam no Test Runner da Unity e fora dela (`Tools/Verificacao/verificar.sh`).
 
 | Arquivo | Cobre |
@@ -11,9 +11,10 @@ Rodam no Test Runner da Unity e fora dela (`Tools/Verificacao/verificar.sh`).
 | `TaskTests.cs` | Ativação/conclusão, sinal errado, sinal antes da ativação, recompensa única com sinais duplicados, prazo com penalidade, cancelamento, pré-requisitos e cascata, regra externa, id duplicado, sequência ordenada, contagem, isolamento entre ativações, ledger idempotente, fórmula de pontos |
 | `PassengerAndEventTests.cs` | Personalidades distintas, pedido de água e entrega, sem pedido quando não permitido, medo na turbulência e conversa, calmo aguenta, aviso de cinto, volta ao acender o cinto, ciclo do banheiro, falha de rota → nova tentativa → recuperação, sem ciclos num voo calmo, desabilitado, tabela de transições; eventos: estado, condição, incompatibilidade, cooldown, repetições, roteirizado, **mesma semente = mesma sequência**, intervalo global; interação: alcance, estado, mãos/itens, seleção de alvo |
 | `PrototypeScenarioTests.cs` | Viagem inteira: embarque, só a mala esquecida conta, pedido de água, turbulência garantida, alvo correto do "acalmar", lixo solicitado, vitória no pouso com pontos esperados (com bônus rápido); só obrigatórias = vitória sem estrelas; derrota por ignorar a água; reinício recria o conteúdo |
+| `SaveAndProgressionTests.cs` | Ida e volta; independente da cultura do sistema (pt-BR); arquivo vazio, lixo ou sem checksum → padrão; byte alterado detectado; migração v1→v2; versão futura preservada como backup; valores absurdos limitados, inconsistentes ou NaN recusados; item equipado bloqueado volta ao padrão; serviço sem arquivo ou corrompido; persistência entre "sessões" e falha de disco sem perder o arquivo anterior; sem segredos no arquivo; progressão idempotente por partida (inclusive após reiniciar o jogo); desbloqueios por estrelas e vitórias; derrota conta voo sem estrelas; recorde; limite da lista de partidas; só equipa o que foi desbloqueado |
 | `Phase2Tests.cs` | Pedido do serviço mais urgente (água/lanche/cobertor); só aceita o que pediu; desistência custa paciência e permite novo pedido; limite de pedidos abertos; prestativo acalma vizinhos; desastrado derruba mais (60 sementes); bônus de resposta rápida; `TryEnd`; descarte por id; cada evento forçado (derramamento limpo e ignorado, carrinho, geladeira, mala caída, passageiro assustado, objeto derrubado); **resistência**: 40 viagens completas com robô (sem travar, resultado único, sem ciclos, todos os eventos aparecem); calibragem de pontos; robô lento perde |
 
-**Resultado em 2026-10-13 (este ambiente, .NET 8.0.131):** `Passed! - Failed: 0, Passed: 93`.
+**Resultado em 2026-10-13 (este ambiente, .NET 8.0.131):** `Passed! - Failed: 0, Passed: 113`.
 
 Teste de resistência:
 - 40 vitórias em 40 viagens e 1.304 tarefas concluídas.
@@ -37,7 +38,19 @@ O teste também revelou um problema de design, já corrigido: a viagem acabava a
 
 ### Recursos 3D
 - `gerar_modulos.py` reimporta cada FBX e confere altura esperada, base no chão, UV e material.
-  **Resultado:** 21/21 OK (tabela em ASSET_MANIFEST.md).
+  **Resultado:** 16/16 módulos e props OK (tabela em ASSET_MANIFEST.md).
+- `gerar_personagens.py` confere:
+  - em cada personagem reimportado: 1 esqueleto e 1 malha ligados, todos os ossos, todo vértice com peso que soma 1 (no máximo 4 ossos), altura, base e rosto virado para +Z;
+  - em cada animação e quadro: sem NaN e mãos/pés/cabeça dentro de limites;
+  - que os loops fecham (primeiro quadro = último);
+  - no *Andar*, que o pé esquerdo vai à frente junto com o braço direito;
+  - no *Sentado*, que a coxa fica horizontal à frente;
+  - no *Pânico*, que as duas mãos ficam acima dos ombros em **todos** os quadros;
+  - que o FBX de animações contém as 9 ações.
+
+  **Resultado:** 5/5 personagens e 9/9 animações OK.
+  Uma primeira versão do *Pânico* derrubava uma mão até a altura do ombro em alguns quadros (visto na prévia). A pose foi corrigida e a checagem passou a cobrir todos os quadros.
+- `previas/poses.png`: um quadro de cada animação (conferência visual).
 - No Editor: **SkyCrew > 3. Validar recursos 3D**.
 
 ## Roteiro manual da Fase 1 (no Editor)
@@ -61,6 +74,9 @@ O teste também revelou um problema de design, já corrigido: a viagem acabava a
 | 9f | Pouso (4:00) | Tela de resultados com estrelas |
 | 10 | Esc no meio do voo → Continuar / Reiniciar / Sair | Pausa congela; reiniciar volta ao embarque sem resíduos |
 | 11 | Ignorar a água por 75 s | Tarefa falha e a partida termina em derrota |
+| 12 | Terminar uma viagem e reiniciar o jogo | Estrelas, voos e recorde persistem; desbloqueios aparecem na tela de resultados |
+| 13 | Corromper `skycrew.save` à mão e abrir o jogo | Aviso na tela de preparo; jogo começa do zero; existe `skycrew.save.corrompido` |
+| 14 | *SkyCrew > 5*, depois Play | Personagens animados: andar/correr pela velocidade, sentados nas poltronas, pânico na turbulência, escorregão na mancha, gesto ao conversar |
 
 ## Ainda sem cobertura
 - Desempenho (FPS/CPU/GPU): nada foi medido; meta provisória de 60 FPS em 1080p.

@@ -75,6 +75,7 @@ namespace SkyCrew.EditorTools
             {
                 "Cabine/Segmento", "Cabine/Parede_Frente", "Cabine/Parede_Fundo", "Cabine/Poltrona", "Cabine/Bagageiro",
                 "Cabine/Cozinha", "Cabine/Banheiro", "Props/Mala", "Props/Garrafa", "Props/Lixo", "Props/Lixeira",
+                "Props/Lanche", "Props/Cobertor", "Props/Esfregao", "Props/Carrinho", "Props/Mancha",
                 "Personagens/Comissaria", "Personagens/Passageiro_1", "Personagens/Passageiro_2",
                 "Personagens/Passageiro_3", "Personagens/Passageiro_4",
             };
@@ -94,18 +95,34 @@ namespace SkyCrew.EditorTools
                 int tris = 0, renderers = 0, missingMaterials = 0;
                 var bounds = new Bounds();
                 bool first = true;
-                foreach (var filter in prefab.GetComponentsInChildren<MeshFilter>(true))
+                var meshes = prefab.GetComponentsInChildren<MeshFilter>(true).Select(f => (f.sharedMesh, f.transform))
+                    .Concat(prefab.GetComponentsInChildren<SkinnedMeshRenderer>(true).Select(r => (r.sharedMesh, r.transform)));
+                foreach (var (mesh, owner) in meshes)
                 {
-                    var mesh = filter.sharedMesh;
                     if (mesh == null)
                     {
                         continue;
                     }
 
                     tris += mesh.triangles.Length / 3;
+                    // limites no espaco da raiz do prefab (inclui a rotacao de eixo do FBX)
+                    var m = prefab.transform.worldToLocalMatrix * owner.localToWorldMatrix;
                     var b = mesh.bounds;
-                    b.center = filter.transform.localToWorldMatrix.MultiplyPoint3x4(b.center);
+                    var c = m.MultiplyPoint3x4(b.center);
+                    var e = b.extents;
+                    var ext = new Vector3(
+                        Mathf.Abs(m.m00) * e.x + Mathf.Abs(m.m01) * e.y + Mathf.Abs(m.m02) * e.z,
+                        Mathf.Abs(m.m10) * e.x + Mathf.Abs(m.m11) * e.y + Mathf.Abs(m.m12) * e.z,
+                        Mathf.Abs(m.m20) * e.x + Mathf.Abs(m.m21) * e.y + Mathf.Abs(m.m22) * e.z);
+                    b = new Bounds(c, ext * 2f);
                     if (first) { bounds = b; first = false; } else { bounds.Encapsulate(b); }
+                }
+
+                bool skinned = prefab.GetComponentsInChildren<SkinnedMeshRenderer>(true).Length > 0;
+                if (p.StartsWith("Personagens/") && (!skinned || prefab.GetComponentInChildren<Animator>() == null))
+                {
+                    report.AppendLine($"  ATENCAO  {p}: personagem sem esqueleto/Animator (rode gerar_personagens.py e reimporte)");
+                    problems++;
                 }
 
                 foreach (var r in prefab.GetComponentsInChildren<Renderer>(true))
@@ -121,6 +138,13 @@ namespace SkyCrew.EditorTools
                                   $"materiais faltando={missingMaterials}");
             }
 
+            int clips = AssetDatabase.LoadAllAssetsAtPath(SkyCrewAnimatorBuilder.AnimationFbx)
+                                     .OfType<AnimationClip>().Count(c => !c.name.StartsWith("__preview__"));
+            report.AppendLine($"  {(clips >= 9 ? "OK" : "ATENCAO")}  Animacoes: {clips} clipes em {SkyCrewAnimatorBuilder.AnimationFbx}");
+            if (clips < 9) problems++;
+            bool controller = Resources.Load<RuntimeAnimatorController>(SkyCrew.Characters.CharacterAnimation.ControllerResource) != null;
+            report.AppendLine($"  {(controller ? "OK" : "ATENCAO")}  Animator Controller {(controller ? "gerado" : "ausente: menu SkyCrew > 5")}");
+            if (!controller) problems++;
             report.AppendLine(problems == 0 ? "Tudo certo." : $"{problems} problema(s).");
             if (problems == 0) Debug.Log(report.ToString()); else Debug.LogWarning(report.ToString());
         }
@@ -167,7 +191,14 @@ namespace SkyCrew.EditorTools
             var importer = (ModelImporter)assetImporter;
             importer.importCameras = false;
             importer.importLights = false;
-            importer.importAnimation = false;
+            bool isAnimationLibrary = assetPath.EndsWith(SkyCrewAnimatorBuilder.AnimationFbx.Substring("Assets".Length));
+            bool isCharacter = assetPath.Contains("/Art/Characters/");
+            // Esqueleto generico: as animacoes de SkyCrew_Animacoes.fbx tocam em todos os personagens
+            // porque os ossos e caminhos sao identicos (mesmo script de geracao).
+            importer.animationType = isAnimationLibrary || isCharacter
+                ? ModelImporterAnimationType.Generic
+                : ModelImporterAnimationType.None;
+            importer.importAnimation = isAnimationLibrary;
             importer.importBlendShapes = false;
             importer.addCollider = false;
             importer.useFileScale = true;

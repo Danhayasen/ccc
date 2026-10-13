@@ -67,7 +67,7 @@ namespace SkyCrew.PassengerAI
                 return false;
             }
 
-            var animator = GetComponent<SkyCrew.Characters.ProceduralCharacterAnimator>();
+            var animator = GetComponent<SkyCrew.Characters.ICharacterAnimation>();
             if (Holding(interactor))
             {
                 var item = interactor.Hands.Take();
