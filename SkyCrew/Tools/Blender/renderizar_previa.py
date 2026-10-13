@@ -117,7 +117,9 @@ def cena_elenco():
     nomes = ["Passageiro_1", "Passageiro_2", "Comissaria", "Passageiro_3", "Passageiro_4"]
     for i, n in enumerate(nomes):
         importar(os.path.join(PERS, n + ".fbx"), ((i - 2) * 0.85, 0, 0))
-    props = [("Mala", (-1.2, 0, 1.0)), ("Garrafa", (-0.5, 0, 1.1)), ("Lixeira", (0.4, 0, 1.0)), ("Lixo", (1.1, 0, 1.1))]
+    props = [("Mala", (-1.2, 0, 1.0)), ("Garrafa", (-0.5, 0, 1.1)), ("Lixeira", (0.4, 0, 1.0)), ("Lixo", (1.1, 0, 1.1)),
+             ("Carrinho", (2.3, 0, 0.3)), ("Esfregao", (-2.3, 0, 0.6)), ("Lanche", (-0.85, 0, 1.6)),
+             ("Cobertor", (0.0, 0, 1.6)), ("Mancha", (0.8, 0, 1.7))]
     for n, p in props:
         importar(os.path.join(PROPS, n + ".fbx"), p)
     bpy.ops.mesh.primitive_plane_add(size=20, location=(0, 0, 0))
@@ -128,7 +130,7 @@ def cena_elenco():
     chao.data.materials.append(mat)
     luz((1.5, 4, 4), energia=500, tamanho=3)
     luz((-3, 3, 2), energia=150, tamanho=3)
-    camera((0, 1.25, 4.6), (0, 0.85, 0), lente=35)   # camera em +Z da Unity: ve a FRENTE
+    camera((0, 1.45, 5.4), (0, 0.75, 0.4), lente=30)   # camera em +Z da Unity: ve a FRENTE
     renderizar("elenco.png")
 
 

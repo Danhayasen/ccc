@@ -37,7 +37,8 @@ namespace SkyCrew.PassengerAI
         }
 
         public string GetAcceptedItemType(Interactor interactor)
-            => _passenger.Brain != null && _passenger.Brain.PendingService == ServiceKind.Water ? ItemTypesUnity.Water : "__nada__";
+            => (_passenger.Brain != null ? SkyCrew.Domain.Match.ItemTypes.FromService(_passenger.Brain.PendingService) : null)
+               ?? "__nada__";
 
         public bool IsAvailable(Interactor interactor)
         {

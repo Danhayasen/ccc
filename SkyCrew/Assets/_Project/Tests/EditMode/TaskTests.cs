@@ -206,23 +206,21 @@ namespace SkyCrew.Tests.EditMode
         public void FormulaDocumentada()
         {
             var l = new ScoreLedger();
-            l.TryApply("a", 550, "tarefas");
+            l.TryApply("a", 2900, "tarefas");
             l.TryApply("b", -100, "falha");
-            var s = ScoreFormula.Compute(l, averageSatisfaction: 0.8f, secondsLeft: 60f, victory: true);
+            var s = ScoreFormula.Compute(l, averageSatisfaction: 0.8f, victory: true);
             Assert.AreEqual(400, s.SatisfactionBonus);
-            Assert.AreEqual(120, s.TimeBonus);
-            Assert.AreEqual(550 - 100 + 400 + 120, s.Total);
+            Assert.AreEqual(2900 - 100 + 400, s.Total);
             Assert.AreEqual(2, s.Stars);
         }
 
         [Test]
-        public void BonusDeTempoTemTetoESoValeNaVitoria()
+        public void DerrotaNaoDaEstrelas()
         {
             var l = new ScoreLedger();
-            Assert.AreEqual(ScoreFormula.MaxTimeBonus, ScoreFormula.Compute(l, 0f, 9999f, true).TimeBonus);
-            var derrota = ScoreFormula.Compute(l, 1f, 100f, false);
-            Assert.AreEqual(0, derrota.TimeBonus);
-            Assert.AreEqual(0, derrota.Stars);
+            l.TryApply("a", 5000, "muito");
+            Assert.AreEqual(0, ScoreFormula.Compute(l, 1f, false).Stars);
+            Assert.AreEqual(3, ScoreFormula.Compute(l, 1f, true).Stars);
         }
 
         [Test]
@@ -230,7 +228,7 @@ namespace SkyCrew.Tests.EditMode
         {
             var l = new ScoreLedger();
             l.TryApply("x", -5000, "desastre");
-            Assert.AreEqual(0, ScoreFormula.Compute(l, 0f, 0f, false).Total);
+            Assert.AreEqual(0, ScoreFormula.Compute(l, 0f, false).Total);
         }
     }
 }

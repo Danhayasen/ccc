@@ -11,7 +11,12 @@ namespace SkyCrew.Aircraft
         public Transform Root;
         public readonly List<ItemDropZone> Bins = new List<ItemDropZone>();
         public readonly List<Light> Lights = new List<Light>();
+        /// <summary>Geladeira de agua (pode quebrar).</summary>
         public ItemDispenser Dispenser;
+        public GameObject DispenserBrokenMarker;
+        public ItemDispenser SnackDispenser;
+        public ItemDispenser BlanketDispenser;
+        public ItemDispenser MopDispenser;
         public DisposalBin TrashBin;
     }
 
@@ -36,7 +41,7 @@ namespace SkyCrew.Aircraft
             BuildSeats(root);
             BuildBins(root, refs);
             BuildGalley(root, refs);
-            BuildLavatory(root);
+            BuildLavatory(root, refs);
             BuildLights(root, refs);
             return refs;
         }
@@ -196,6 +201,22 @@ namespace SkyCrew.Aircraft
             Primitives.Shape(PrimitiveType.Cube, "Marcador_Agua", dispenser.transform, Vector3.zero,
                              new Vector3(0.12f, 0.3f, 0.5f), MaterialLibrary.AzulClaro);
             refs.Dispenser = dispenser.AddComponent<ItemDispenser>();
+            refs.DispenserBrokenMarker = Primitives.Shape(PrimitiveType.Sphere, "Luz_Defeito", dispenser.transform,
+                new Vector3(0.05f, 0.3f, 0f), Vector3.one * 0.12f, MaterialLibrary.Vermelho);
+            refs.DispenserBrokenMarker.GetComponent<Renderer>().sharedMaterial = MaterialLibrary.GetEmissive(MaterialLibrary.Vermelho, 3f);
+            refs.DispenserBrokenMarker.SetActive(false);
+
+            refs.SnackDispenser = MakeDispenser(galley, "Gaveta_Lanches", new Vector3(1.2f, 1.05f, z + 0.5f), MaterialLibrary.Amarelo);
+            refs.BlanketDispenser = MakeDispenser(galley, "Armario_Cobertores", new Vector3(1.2f, 1.75f, z - 0.4f), MaterialLibrary.AzulClaro);
+
+            // Area onde o carrinho de servico deve voltar
+            var cartZone = new GameObject("Zona_Carrinho");
+            cartZone.transform.SetParent(galley, false);
+            cartZone.transform.localPosition = new Vector3(0f, 0.6f, z - 0.2f);
+            var cartTrigger = cartZone.AddComponent<BoxCollider>();
+            cartTrigger.isTrigger = true;
+            cartTrigger.size = new Vector3(2.2f, 1.2f, 1.6f);
+            cartZone.AddComponent<SkyCrew.Physics.CartReturnZone>();
 
             // Lixeira
             var bin = ModelLibrary.Spawn("Props/Lixeira", galley, new Vector3(1.1f, 0f, CabinLayout.GalleyStartZ + 0.35f), Quaternion.identity,
@@ -208,7 +229,19 @@ namespace SkyCrew.Aircraft
             refs.TrashBin = bin.AddComponent<DisposalBin>();
         }
 
-        private static void BuildLavatory(Transform root)
+        private static ItemDispenser MakeDispenser(Transform parent, string name, Vector3 localPosition, Color marker)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            var trigger = go.AddComponent<BoxCollider>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector3(0.4f, 0.4f, 0.6f);
+            Primitives.Shape(PrimitiveType.Cube, "Marcador", go.transform, Vector3.zero, new Vector3(0.12f, 0.25f, 0.45f), marker);
+            return go.AddComponent<ItemDispenser>();
+        }
+
+        private static void BuildLavatory(Transform root, LevelRefs refs)
         {
             var lav = new GameObject("Banheiro").transform;
             lav.SetParent(root, false);
@@ -233,6 +266,9 @@ namespace SkyCrew.Aircraft
             }
 
             Primitives.Box("Batente", lav, new Vector3(0f, 2.15f, z0), new Vector3(0.9f, 0.2f, 0.06f), MaterialLibrary.Creme);
+
+            // Esfregao no armario do fundo (lado esquerdo, virado para o corredor)
+            refs.MopDispenser = MakeDispenser(lav, "Armario_Esfregao", new Vector3(-0.85f, 1.0f, z0 - 0.15f), MaterialLibrary.Amarelo);
         }
 
         private static void BuildLights(Transform root, LevelRefs refs)

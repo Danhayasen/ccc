@@ -53,6 +53,8 @@ Essa separação permite três coisas:
 | `IPassengerWorld` | Domain/PassengerAI | O que o passageiro sabe do mundo (cinto, turbulência, serviço) |
 | `IPlayerCommandSource` | Runtime/Player | Origem dos comandos do jogador (teclado, controle, rede, testes) |
 | `IRandom` | Domain/Common | Aleatoriedade injetável e reproduzível (SplitMix64) |
+| `WorldRequest` / `WorldCleared` | Domain/Content | O cenário pede ao mundo 3D para criar ou limpar algo (lixo, mancha, carrinho, mala); `WorldDirector` decide posições |
+| `InteractionVerb.ApplyItem` | Domain/Interaction | Usar o item segurado sem entregá-lo (esfregão na mancha) |
 
 `ISaveParticipant` e `IInteractionHandler` ainda não foram criados: não há salvamento nem handlers externos
 nesta fase (a regra da especificação é não criar interfaces sem necessidade).
@@ -69,11 +71,11 @@ nesta fase (a regra da especificação é não criar interfaces sem necessidade)
 | ReturningToMenu | | | | | | | ✔ |
 
 - **Inicialização:** etapas `cenario`, `navmesh`, `jogador` e `passageiros`. A partida só fica `Ready` quando todas terminam.
-- **Vitória:** todas as tarefas de `RequiredTaskIds` concluídas.
-- **Derrota:**
+- **Vitória (no pouso):** o tempo de voo acaba com todas as tarefas de `RequiredTaskIds` concluídas. O voo continua depois das obrigatórias: pedidos e imprevistos seguem até o pouso (loop principal).
+- **Derrota imediata:**
   - uma tarefa obrigatória falhou ou foi cancelada;
-  - o tempo de voo acabou;
   - a satisfação média ficou abaixo de 0,2 por 3 s.
+- **Derrota no pouso:** alguma obrigatória ainda pendente.
 - `Finish` gera o resultado **uma única vez**. `Reset` recria tarefas, eventos, pontuação e passageiros do zero.
 
 ## Passageiros
@@ -95,8 +97,17 @@ Recovering, ReturningToSeat, Disabled`. As transições permitidas ficam numa ta
 - **Corpo:** detecta travamento (3 s sem sair do lugar).
 - **Corredor:** `AisleTrafficCoordinator` limita quantos andam ao mesmo tempo (padrão 2, em fila).
 
-Necessidades em [0, 1]: paciência, conforto, medo, sede e banheiro.
+Necessidades em [0, 1]: paciência, conforto, medo, sede, fome, frio e banheiro.
 Satisfação = 0,45·paciência + 0,30·conforto + 0,25·(1 − medo).
+
+**Pedidos:**
+- Sede, fome e frio geram pedidos de água, lanche e cobertor. O passageiro escolhe o que mais passou do limite.
+- A cabine aceita no máximo `MaxOpenRequests` (3) pedidos abertos ao mesmo tempo.
+- Se a tarefa do pedido falhar, o passageiro **desiste**: perde 0,2 de paciência e pode pedir de novo depois.
+
+**Personalidades com efeito:**
+- *Prestativo* (Helpfulness ≥ 0,7): sentado e calmo, reduz 0,03/s do medo dos outros.
+- *Desastrado*: tem peso maior no sorteio do evento "objeto derrubado".
 
 ## Tarefas
 
@@ -106,7 +117,10 @@ Satisfação = 0,45·paciência + 0,30·conforto + 0,25·(1 − medo).
 - Recompensa e penalidade são aplicadas pelo `ScoreLedger` com chave única (`tarefa:<id>` e `tarefa_falhou:<id>`). Assim, sinais duplicados não pontuam duas vezes.
 - Cancelar ou falhar uma tarefa cancela em cascata as tarefas que dependem dela.
 
-Objetivos disponíveis: entregar item, levar item a uma zona, descartar N itens, conversar, ação nomeada e sequência ordenada.
+Objetivos disponíveis: entregar item, levar item a uma zona, descartar N itens, conversar, ação nomeada (N vezes) e sequência ordenada.
+
+- "Levar à zona" e "descartar" aceitam o **id da instância** (`TargetId` do sinal). Assim, a mala que caiu não conclui a tarefa da mala esquecida, e um lixo não conta para duas tarefas.
+- **Bônus de resposta rápida:** concluir uma tarefa com prazo usando até 50% do tempo rende +25% da recompensa (chave `tarefa_rapida:<id>`).
 
 ## Eventos
 
@@ -120,15 +134,37 @@ O `EventScheduler` filtra os eventos elegíveis por:
 - tags incompatíveis com os eventos ativos;
 - condições.
 
-Depois sorteia com peso e chance por rodada. Eventos roteirizados (garantidos) são tentados de novo enquanto estiverem bloqueados. A mesma semente gera a mesma sequência (teste `MesmaSementeMesmaSequencia`). `CancelAll` dispara `Ended` para restaurar estados temporários.
+Depois sorteia com peso e chance por rodada. Eventos roteirizados (garantidos) são tentados de novo enquanto estiverem bloqueados. A mesma semente gera a mesma sequência (teste `MesmaSementeMesmaSequencia`). `TryEnd` encerra um evento quando o problema é resolvido. `CancelAll` dispara `Ended` para restaurar estados temporários.
+
+### Eventos do protótipo
+
+| Evento | Tags (incompatível com) | Duração | Tarefa criada | Efeito no mundo (`WorldRequest`) |
+|---|---|---|---|---|
+| Turbulência leve (garantida aos 25 s) | turbulência, cabine (turbulência) | 10 s | Acalmar o mais sensível + recolher 2 lixos | Lixo; tremor, tropeços, objetos pulando |
+| Objeto derrubado | cabine | 4 s | Recolher 1 lixo | Lixo perto do passageiro sorteado (peso = desastrado) |
+| Derramamento | corredor (corredor) | 46 s | Esfregar 3× (45 s) | Mancha no corredor; escorregão |
+| Corredor bloqueado | corredor (corredor) | 51 s | Levar o carrinho à cozinha (50 s) | Carrinho com NavMeshObstacle |
+| Geladeira quebrada | equipamento (equipamento) | 61 s | Bater 3× (60 s) | `IsEquipmentAvailable("geladeira") = false` |
+| Mala caída | cabine | 4 s | Guardar a mala que caiu (60 s) | Mala despencando no corredor |
+| Passageiro assustado | passageiro | 3 s | Acalmar (45 s) | Medo +0,8 |
+
+O máximo é de 2 eventos ativos, com intervalo global de 20 s e chance de 35% a cada 6 s. Resolver a tarefa encerra o evento e o mundo limpa o que criou (`WorldCleared`).
 
 ## Pontuação
 
 ```
-total   = recompensas − penalidades + satisfação_média × 500 + bônus_tempo
-bônus_tempo = min(300, segundos_restantes × 2)   (só em vitória)
-estrelas = nº de limites atingidos em {400, 800, 1200}   (0 em derrota)
+total    = recompensas (inclui bônus de resposta rápida) − penalidades + satisfação_média × 500
+estrelas = nº de limites atingidos em {2000, 3000, 4000}   (0 em derrota)
 ```
+Os limites foram calibrados por simulação (`LoopSoakTests.CalibragemDePontos`, 20 viagens cada):
+
+| Tempo de reação | Média de pontos |
+|---|---|
+| ~5 s | ~4600 |
+| 15 s | ~3500 |
+| 25 s | ~2800 |
+| 35 s | ~2600 |
+| Só as obrigatórias | < 1000 |
 
 ## Cenário de cabine (unidades em metros)
 

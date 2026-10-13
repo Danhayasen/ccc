@@ -39,7 +39,6 @@ namespace SkyCrew.Events
                 _lightBase.Add(l.intensity);
             }
 
-            scenario.TrashSpawnRequested += SpawnTrash;
         }
 
         private void Update()
@@ -97,16 +96,6 @@ namespace SkyCrew.Events
             for (int i = 0; i < _level.Lights.Count; i++)
             {
                 _level.Lights[i].intensity = _lightBase[i];
-            }
-        }
-
-        private void SpawnTrash(int count, string taskId)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                float z = Random.Range(CabinLayout.RowZ(CabinLayout.Rows), CabinLayout.RowZ(1));
-                var pos = new Vector3(Random.Range(-0.15f, 0.15f), 1.6f, z);
-                ItemFactory.Create(ItemTypesUnity.Trash, pos, Random.rotation);
             }
         }
 

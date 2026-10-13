@@ -45,11 +45,13 @@ namespace SkyCrew.Domain.Tasks
         public static GameplaySignal Delivered(string itemType, string targetId, string actorId = null)
             => new GameplaySignal(SignalType.ItemDelivered, actorId, targetId, itemType);
 
-        public static GameplaySignal PlacedInZone(string itemType, string zoneId, string actorId = null)
-            => new GameplaySignal(SignalType.ItemPlacedInZone, actorId, null, itemType, zoneId);
+        /// <param name="itemId">Instancia do item (vai em TargetId).</param>
+        public static GameplaySignal PlacedInZone(string itemType, string zoneId, string actorId = null, string itemId = null)
+            => new GameplaySignal(SignalType.ItemPlacedInZone, actorId, itemId, itemType, zoneId);
 
-        public static GameplaySignal Disposed(string itemType, string zoneId = null, string actorId = null)
-            => new GameplaySignal(SignalType.ItemDisposed, actorId, null, itemType, zoneId);
+        /// <param name="itemId">Instancia do item (vai em TargetId).</param>
+        public static GameplaySignal Disposed(string itemType, string zoneId = null, string actorId = null, string itemId = null)
+            => new GameplaySignal(SignalType.ItemDisposed, actorId, itemId, itemType, zoneId);
 
         public static GameplaySignal Talked(string targetId, string actorId = null)
             => new GameplaySignal(SignalType.TalkedTo, actorId, targetId);

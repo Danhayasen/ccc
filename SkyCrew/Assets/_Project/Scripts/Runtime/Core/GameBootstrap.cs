@@ -43,6 +43,7 @@ namespace SkyCrew.Core
         private CabinNavMesh _navMesh;
         private AisleTrafficCoordinator _traffic;
         private TurbulenceDirector _turbulence;
+        private WorldDirector _world;
         private GameHud _hud;
         private float _readyTimer;
         private bool _restartRequested;
@@ -95,6 +96,8 @@ namespace SkyCrew.Core
 
             _turbulence = gameObject.AddComponent<TurbulenceDirector>();
             _turbulence.Bind(Session, Scenario, _cameraRig, _player.Motor, _level);
+            _world = gameObject.AddComponent<WorldDirector>();
+            _world.Bind(this, Scenario);
 
             _hud = gameObject.AddComponent<GameHud>();
             _hud.Bind(this, _player, _input, _cameraRig.GetComponent<Camera>());
@@ -163,10 +166,21 @@ namespace SkyCrew.Core
                 variant++;
             }
 
-            // Mala esquecida no corredor (tarefa "guardar a mala")
-            ItemFactory.Create(ItemTypesUnity.Suitcase, CabinLayout.ForgottenSuitcase, Quaternion.Euler(0f, 90f, 0f));
-            _level.Dispenser.Configure("água",
-                () => ItemFactory.Create(ItemTypesUnity.Water, _level.Dispenser.transform.position, Quaternion.identity));
+            // Mala esquecida no corredor (tarefa "guardar a mala" exige esta instancia)
+            ItemFactory.Create(ItemTypesUnity.Suitcase, CabinLayout.ForgottenSuitcase, Quaternion.Euler(0f, 90f, 0f),
+                               PrototypeScenario.ForgottenSuitcaseId);
+            ConfigureDispenser(_level.Dispenser, "água", ItemTypesUnity.Water, PrototypeScenario.EquipmentFridge,
+                               _level.DispenserBrokenMarker);
+            ConfigureDispenser(_level.SnackDispenser, "lanche", ItemTypesUnity.Snack);
+            ConfigureDispenser(_level.BlanketDispenser, "cobertor", ItemTypesUnity.Blanket);
+            ConfigureDispenser(_level.MopDispenser, "esfregão", ItemTypesUnity.Mop);
+        }
+
+        private static void ConfigureDispenser(ItemDispenser dispenser, string name, string itemType,
+                                               string equipmentId = null, GameObject brokenMarker = null)
+        {
+            dispenser.Configure(name, () => ItemFactory.Create(itemType, dispenser.transform.position, Quaternion.identity),
+                                equipmentId, brokenMarker);
         }
 
         private void Update()
@@ -224,6 +238,7 @@ namespace SkyCrew.Core
                 Destroy(item.gameObject);
             }
 
+            _world.ClearAll();
             Destroy(_dynamicRoot.gameObject);
             _dynamicRoot = new GameObject("Dinamicos").transform;
             _dynamicRoot.SetParent(transform, false);

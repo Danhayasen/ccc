@@ -7,7 +7,10 @@ using UnityEngine;
 
 namespace SkyCrew.Interaction
 {
-    /// <summary>Geladeira da cozinha: entrega uma garrafa nova na mao do jogador.</summary>
+    /// <summary>
+    /// Fonte de itens (geladeira, gaveta de lanches, armario de cobertores, esfregao).
+    /// Se estiver ligada a um equipamento quebrado, a acao vira "Consertar" (bater).
+    /// </summary>
     public sealed class ItemDispenser : MonoBehaviour, IInteractable
     {
         [SerializeField] private string _displayName = "água";
@@ -15,24 +18,51 @@ namespace SkyCrew.Interaction
         [SerializeField] private float _cooldown = 0.5f;
 
         private Func<CarryableItem> _factory;
+        private string _equipmentId;
+        private GameObject _brokenMarker;
         private int _loose;
         private float _readyAt;
 
-        public void Configure(string displayName, Func<CarryableItem> factory)
+        public void Configure(string displayName, Func<CarryableItem> factory, string equipmentId = null,
+                              GameObject brokenMarker = null)
         {
             _displayName = displayName;
             _factory = factory;
+            _equipmentId = equipmentId;
+            _brokenMarker = brokenMarker;
         }
 
-        public InteractionVerb GetVerb(Interactor interactor) => InteractionVerb.Dispense;
-        public string GetPrompt(Interactor interactor) => "Pegar " + _displayName;
+        public bool IsBroken => _equipmentId != null && GameBootstrap.Session != null
+                                && !GameBootstrap.Session.IsEquipmentAvailable(_equipmentId);
+
+        private void Update()
+        {
+            if (_brokenMarker != null)
+            {
+                _brokenMarker.SetActive(IsBroken && Mathf.Repeat(Time.time, 0.6f) < 0.35f);
+            }
+        }
+
+        public InteractionVerb GetVerb(Interactor interactor) => IsBroken ? InteractionVerb.Use : InteractionVerb.Dispense;
+        public string GetPrompt(Interactor interactor) => IsBroken ? "Consertar (dar uma batida)" : "Pegar " + _displayName;
         public string GetAcceptedItemType(Interactor interactor) => null;
-        public bool IsAvailable(Interactor interactor) => _factory != null && _loose < _maxLooseItems && Time.time >= _readyAt;
+
+        public bool IsAvailable(Interactor interactor)
+            => IsBroken || (_factory != null && _loose < _maxLooseItems && Time.time >= _readyAt);
+
         public int Priority => 2;
         public Vector3 InteractionPoint => transform.position;
 
         public bool Execute(Interactor interactor)
         {
+            if (IsBroken)
+            {
+                GameBootstrap.Session.Signal(GameplaySignal.Action(SkyCrew.Domain.Content.PrototypeScenario.ActionRepair,
+                                                                   _equipmentId, interactor.ActorId));
+                interactor.Feedback(GameBootstrap.Session.IsEquipmentAvailable(_equipmentId) ? "Voltou a funcionar!" : "BAM!");
+                return true;
+            }
+
             var item = _factory();
             if (item == null)
             {
@@ -73,7 +103,7 @@ namespace SkyCrew.Interaction
                 return false;
             }
 
-            GameBootstrap.Session?.Signal(GameplaySignal.Disposed(item.ItemType, _zoneId, interactor.ActorId));
+            GameBootstrap.Session?.Signal(GameplaySignal.Disposed(item.ItemType, _zoneId, interactor.ActorId, item.InstanceId));
             item.Despawn();
             return true;
         }
@@ -139,7 +169,7 @@ namespace SkyCrew.Interaction
 
             _stored[slot] = item;
             item.LockInto(_slots[slot]);
-            GameBootstrap.Session?.Signal(GameplaySignal.PlacedInZone(item.ItemType, _zoneId, interactor.ActorId));
+            GameBootstrap.Session?.Signal(GameplaySignal.PlacedInZone(item.ItemType, _zoneId, interactor.ActorId, item.InstanceId));
             return true;
         }
     }
@@ -150,5 +180,9 @@ namespace SkyCrew.Interaction
         public const string Water = SkyCrew.Domain.Match.ItemTypes.Water;
         public const string Suitcase = SkyCrew.Domain.Match.ItemTypes.Suitcase;
         public const string Trash = SkyCrew.Domain.Match.ItemTypes.Trash;
+        public const string Snack = SkyCrew.Domain.Match.ItemTypes.Snack;
+        public const string Blanket = SkyCrew.Domain.Match.ItemTypes.Blanket;
+        public const string Mop = SkyCrew.Domain.Match.ItemTypes.Mop;
+        public const string Cart = SkyCrew.Domain.Match.ItemTypes.Cart;
     }
 }

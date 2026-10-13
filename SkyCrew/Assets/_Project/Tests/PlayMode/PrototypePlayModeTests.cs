@@ -97,6 +97,33 @@ namespace SkyCrew.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator DerramamentoLimpoComEsfregao()
+        {
+            var session = GameBootstrap.Session;
+            session.Tick(session.Config.BoardingSeconds + 0.1f); // avanca o embarque
+            Assert.AreEqual(MatchState.InFlight, session.State.Current);
+            session.Events.CancelAll();
+            Assert.IsTrue(session.Events.TryStart(PrototypeScenario.EventSpill,
+                new SkyCrew.Domain.Events.EventContext(MatchState.InFlight, 100f), out string reason, ignoreGlobalInterval: true), reason);
+            yield return null;
+
+            var spill = Object.FindAnyObjectByType<SpillZone>();
+            Assert.IsNotNull(spill, "o WorldDirector deveria criar a mancha");
+            var interactor = _game.Player.Interactor;
+            var mop = ItemFactory.Create(ItemTypesUnity.Mop, interactor.transform.position + Vector3.up, Quaternion.identity);
+            Assert.IsTrue(interactor.Hands.PickUp(mop));
+            for (int i = 0; i < PrototypeScenario.CleanSwipes; i++)
+            {
+                Assert.IsTrue(spill.Execute(interactor));
+            }
+
+            yield return null;
+            Assert.IsFalse(session.Events.IsActive(PrototypeScenario.EventSpill), "limpar encerra o evento");
+            Assert.IsTrue(spill == null, "a mancha some quando o evento termina");
+            Assert.AreSame(mop, interactor.Hands.Held, "o esfregao continua na mao");
+        }
+
+        [UnityTest]
         public IEnumerator ObjetoSoltoNaoAtravessaOPiso()
         {
             var water = ItemFactory.Create(ItemTypesUnity.Water, new Vector3(0f, 1.5f, 0f), Quaternion.identity);

@@ -109,9 +109,9 @@ namespace SkyCrew.Tests.EditMode
         }
 
         [Test]
-        public void VitoriaGeraResultadosUmaUnicaVez()
+        public void VitoriaSoNoPousoEResultadoUmaUnicaVez()
         {
-            var s = NewSession(boarding: 1f);
+            var s = NewSession(boarding: 1f, flight: 10f);
             s.TryBecomeReady(out _);
             s.StartBoarding(out _);
             s.Tick(1.1f);
@@ -120,6 +120,12 @@ namespace SkyCrew.Tests.EditMode
             Assert.IsTrue(s.Tasks.TryActivate("t1", out _));
             s.Signal(GameplaySignal.Action("acao"));
             s.Tick(0.1f);
+            Assert.AreEqual(MatchState.InFlight, s.State.Current, "o voo continua ate o pouso");
+            for (int i = 0; i < 100; i++)
+            {
+                s.Tick(0.1f);
+            }
+
             Assert.AreEqual(MatchState.Results, s.State.Current);
             Assert.IsTrue(s.Results.Victory);
             Assert.IsFalse(s.Finish(true, "de novo"), "conclusao duplicada deve ser rejeitada");
@@ -148,13 +154,17 @@ namespace SkyCrew.Tests.EditMode
         [Test]
         public void ReiniciarNaoPreservaEstadoAnterior()
         {
-            var s = NewSession(boarding: 1f);
+            var s = NewSession(boarding: 1f, flight: 5f);
             s.TryBecomeReady(out _);
             s.StartBoarding(out _);
             s.Tick(1.1f);
             s.Tasks.TryActivate("t1", out _);
             s.Signal(GameplaySignal.Action("acao"));
-            s.Tick(0.1f);
+            for (int i = 0; i < 60; i++)
+            {
+                s.Tick(0.1f);
+            }
+
             Assert.AreEqual(MatchState.Results, s.State.Current);
             var oldTasks = s.Tasks;
 

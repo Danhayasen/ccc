@@ -430,6 +430,79 @@ def prop_lixeira():
     return raiz
 
 
+def prop_lanche():
+    raiz = vazio("Lanche")
+    m = Malha("Lanche_Malha")
+    m.caixa((0, 0.05, 0), (0.2, 0.1, 0.14), "amarelo", chanfro=0.02)          # caixinha
+    m.caixa((0, 0.05, 0.071), (0.12, 0.06, 0.005), "vermelho")                 # logo
+    m.caixa((0, 0.101, 0), (0.08, 0.004, 0.14), "laranja")                     # fita
+    m.criar(raiz)
+    return raiz
+
+
+def prop_cobertor():
+    raiz = vazio("Cobertor")
+    m = Malha("Cobertor_Malha")
+    m.caixa((0, 0.06, 0), (0.34, 0.12, 0.26), "azul_claro", chanfro=0.04)
+    for z in (-0.08, 0.08):
+        m.caixa((0, 0.06, z), (0.35, 0.125, 0.025), "branco")                  # listras
+    m.criar(raiz)
+    return raiz
+
+
+def prop_esfregao():
+    raiz = vazio("Esfregao")
+    m = Malha("Esfregao_Malha")
+    m.cilindro((0, 0.65, 0), 0.018, 1.1, "amarelo", lados=6)                   # cabo
+    m.caixa((0, 0.06, 0), (0.32, 0.06, 0.1), "azul", chanfro=0.015)             # base
+    for k in range(7):
+        m.caixa((-0.14 + k * 0.047, 0.02, 0), (0.035, 0.04, 0.09), "branco")  # franjas
+    m.criar(raiz)
+    return raiz
+
+
+def prop_carrinho():
+    raiz = vazio("Carrinho")
+    m = Malha("Carrinho_Malha")
+    m.caixa((0, 0.52, 0), (0.4, 0.92, 0.8), "metal", chanfro=0.02)
+    for k in range(3):
+        y = 0.25 + k * 0.28
+        m.caixa((0, y, 0.405), (0.36, 0.24, 0.01), "cinza")                    # gavetas (frente)
+        m.caixa((0, y + 0.06, 0.415), (0.14, 0.03, 0.02), "vermelho")
+    m.caixa((0, 1.0, -0.42), (0.36, 0.05, 0.05), "vermelho", chanfro=0.01)     # alca
+    m.caixa((0, 0.99, 0), (0.42, 0.03, 0.82), "cinza_escuro")                  # tampo
+    m.cilindro((0.1, 1.06, 0.15), 0.05, 0.1, "branco", lados=8)                # copos
+    m.cilindro((-0.08, 1.06, 0.2), 0.05, 0.1, "branco", lados=8)
+    for x in (-0.15, 0.15):
+        for z in (-0.3, 0.3):
+            m.cilindro((x, 0.04, z), 0.04, 0.03, "preto", eixo="X", lados=8)  # rodinhas
+    m.criar(raiz)
+    return raiz
+
+
+def prop_mancha():
+    raiz = vazio("Mancha")
+    m = Malha("Mancha_Malha")
+    rnd = random.Random(9)
+    pontos = []
+    for k in range(14):
+        a = 2 * math.pi * k / 14
+        r = 0.42 * (0.75 + 0.35 * rnd.random())
+        pontos.append((math.cos(a) * r, math.sin(a) * r * 0.75))
+    # poligono no plano XZ da Unity, extrudado bem fino em Y
+    bm = m.bm
+    base = [bm.verts.new(U(x, 0.0, z)) for x, z in pontos]
+    topo = [bm.verts.new(U(x, 0.008, z)) for x, z in pontos]
+    faces = [bm.faces.new(topo), bm.faces.new(list(reversed(base)))]
+    for i in range(len(pontos)):
+        j = (i + 1) % len(pontos)
+        faces.append(bm.faces.new((base[i], base[j], topo[j], topo[i])))
+    m._pintar(faces, "laranja")
+    m.esfera((0.12, 0.009, 0.05), (0.12, 0.002, 0.08), "amarelo", segs=8, aneis=3)   # brilho
+    m.criar(raiz)
+    return raiz
+
+
 # ---------------------------------------------------------------------------
 # PERSONAGENS (cabecao, olhos grandes; partes separadas com pivo na articulacao)
 # ---------------------------------------------------------------------------
@@ -550,6 +623,11 @@ def principal():
         ("Props", "Garrafa", prop_garrafa, 0.26),
         ("Props", "Lixo", prop_lixo, 0.14),
         ("Props", "Lixeira", prop_lixeira, 0.7),
+        ("Props", "Lanche", prop_lanche, 0.1),
+        ("Props", "Cobertor", prop_cobertor, 0.125),
+        ("Props", "Esfregao", prop_esfregao, 1.2),
+        ("Props", "Carrinho", prop_carrinho, 1.11),
+        ("Props", "Mancha", prop_mancha, 0.011),
         ("Personagens", "Comissaria",
          lambda: personagem("Comissaria", "pele_1", "azul_escuro", "branco", "azul_escuro",
                             "cabelo_castanho", "coque", "lenco"), 1.76),

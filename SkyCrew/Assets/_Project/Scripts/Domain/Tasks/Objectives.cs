@@ -106,17 +106,21 @@ namespace SkyCrew.Domain.Tasks
     // --- Levar um objeto a um destino ----------------------------------------
     public sealed class PlaceItemInZoneObjectiveDefinition : ObjectiveDefinition
     {
-        public PlaceItemInZoneObjectiveDefinition(string description, string itemType, string zoneId, int count = 1)
+        /// <param name="itemId">Instancia especifica (TargetId do sinal); null = qualquer item do tipo.</param>
+        public PlaceItemInZoneObjectiveDefinition(string description, string itemType, string zoneId, int count = 1,
+                                                  string itemId = null)
             : base(description)
         {
             ItemType = itemType;
             ZoneId = zoneId;
             Count = count;
+            ItemId = itemId;
         }
 
         public string ItemType { get; }
         public string ZoneId { get; }
         public int Count { get; }
+        public string ItemId { get; }
 
         public override ITaskObjective CreateRuntime() => new Runtime(this);
 
@@ -131,22 +135,30 @@ namespace SkyCrew.Domain.Tasks
 
             protected override bool Matches(in GameplaySignal s)
                 => s.Type == SignalType.ItemPlacedInZone && FieldMatch.Field(_def.ItemType, s.ItemType)
-                   && FieldMatch.Field(_def.ZoneId, s.ZoneId);
+                   && FieldMatch.Field(_def.ZoneId, s.ZoneId) && FieldMatch.Field(_def.ItemId, s.TargetId);
         }
     }
 
     // --- Recolher / limpar (descartar N itens) --------------------------------
     public sealed class DisposeItemsObjectiveDefinition : ObjectiveDefinition
     {
-        public DisposeItemsObjectiveDefinition(string description, string itemType, int count)
+        private readonly string[] _itemIds;
+
+        /// <param name="itemIds">Instancias que contam (evita que um item complete duas tarefas); null = qualquer.</param>
+        public DisposeItemsObjectiveDefinition(string description, string itemType, int count, string[] itemIds = null)
             : base(description)
         {
             ItemType = itemType;
             Count = count;
+            _itemIds = itemIds == null ? null : (string[])itemIds.Clone();
         }
 
         public string ItemType { get; }
         public int Count { get; }
+        public IReadOnlyList<string> ItemIds => _itemIds;
+
+        internal bool AcceptsItem(string itemId)
+            => _itemIds == null || (itemId != null && Array.IndexOf(_itemIds, itemId) >= 0);
 
         public override ITaskObjective CreateRuntime() => new Runtime(this);
 
@@ -160,7 +172,8 @@ namespace SkyCrew.Domain.Tasks
             }
 
             protected override bool Matches(in GameplaySignal s)
-                => s.Type == SignalType.ItemDisposed && FieldMatch.Field(_def.ItemType, s.ItemType);
+                => s.Type == SignalType.ItemDisposed && FieldMatch.Field(_def.ItemType, s.ItemType)
+                   && _def.AcceptsItem(s.TargetId);
         }
     }
 
@@ -193,15 +206,20 @@ namespace SkyCrew.Domain.Tasks
     // --- Acao nomeada (ex.: "abrir_bagageiro") ---------------------------------
     public sealed class PerformActionObjectiveDefinition : ObjectiveDefinition
     {
-        public PerformActionObjectiveDefinition(string description, string actionId, string targetId = null)
+        public PerformActionObjectiveDefinition(string description, string actionId, string targetId = null,
+                                                int count = 1)
             : base(description)
         {
             ActionId = actionId;
             TargetId = targetId;
+            Count = count;
         }
 
         public string ActionId { get; }
         public string TargetId { get; }
+
+        /// <summary>Quantas vezes a acao precisa acontecer (ex.: 3 batidas para consertar).</summary>
+        public int Count { get; }
 
         public override ITaskObjective CreateRuntime() => new Runtime(this);
 
@@ -209,7 +227,7 @@ namespace SkyCrew.Domain.Tasks
         {
             private readonly PerformActionObjectiveDefinition _def;
 
-            public Runtime(PerformActionObjectiveDefinition def) : base(def.Description, 1)
+            public Runtime(PerformActionObjectiveDefinition def) : base(def.Description, def.Count)
             {
                 _def = def;
             }

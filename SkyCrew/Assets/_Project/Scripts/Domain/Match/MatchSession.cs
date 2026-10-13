@@ -17,6 +17,15 @@ namespace SkyCrew.Domain.Match
         public float FailSatisfactionThreshold = 0.2f;
 
         public float SatisfactionGraceSeconds = 3f;
+
+        /// <summary>Maximo de pedidos de servico abertos ao mesmo tempo na cabine.</summary>
+        public int MaxOpenRequests = 3;
+
+        /// <summary>Passageiros com Helpfulness acima disso acalmam os vizinhos assustados.</summary>
+        public float HelperThreshold = 0.7f;
+
+        /// <summary>Medo reduzido por segundo, por ajudante ativo, em cada passageiro assustado.</summary>
+        public float HelperSoothePerSecond = 0.03f;
         public ulong Seed = 12345;
         public float Difficulty = 1f;
         public EventSchedulerConfig Events = new EventSchedulerConfig();
@@ -46,6 +55,7 @@ namespace SkyCrew.Domain.Match
         private readonly HashSet<string> _pendingInitSteps = new HashSet<string>(StringComparer.Ordinal);
         private readonly List<PassengerBrain> _passengers = new List<PassengerBrain>();
         private readonly Dictionary<string, PassengerBrain> _passengersById = new Dictionary<string, PassengerBrain>();
+        private readonly HashSet<string> _brokenEquipment = new HashSet<string>(StringComparer.Ordinal);
         private float _lowSatisfactionTime;
         private bool _resultsGenerated;
         private bool _seatbeltManual;
@@ -83,7 +93,41 @@ namespace SkyCrew.Domain.Match
         // --- IPassengerWorld -------------------------------------------------------
         public bool SeatbeltSignOn => _seatbeltManual || Events.ActiveIntensityWithTag(EventTags.Turbulence) > 0f;
         public float TurbulenceIntensity => Events.ActiveIntensityWithTag(EventTags.Turbulence);
-        public bool CanRequestService => State.Current == MatchState.InFlight;
+        public bool CanRequestService => State.Current == MatchState.InFlight && OpenRequests < Config.MaxOpenRequests;
+
+        public int OpenRequests
+        {
+            get
+            {
+                int n = 0;
+                foreach (var p in _passengers)
+                {
+                    if (p.PendingService != ServiceKind.None)
+                    {
+                        n++;
+                    }
+                }
+
+                return n;
+            }
+        }
+
+        /// <summary>Quantos passageiros prestativos estao acalmando a cabine agora.</summary>
+        public int ActiveHelpers { get; private set; }
+
+        // --- Equipamentos (ex.: geladeira quebrada) -------------------------------------
+        public event Action<string, bool> EquipmentChanged;
+
+        public bool IsEquipmentAvailable(string equipmentId) => !_brokenEquipment.Contains(equipmentId);
+
+        public void SetEquipmentBroken(string equipmentId, bool broken)
+        {
+            bool changed = broken ? _brokenEquipment.Add(equipmentId) : _brokenEquipment.Remove(equipmentId);
+            if (changed)
+            {
+                EquipmentChanged?.Invoke(equipmentId, !broken);
+            }
+        }
 
         public void SetSeatbeltSign(bool on) => _seatbeltManual = on;
 
@@ -218,6 +262,8 @@ namespace SkyCrew.Domain.Match
                 p.Tick(dt, this);
             }
 
+            ApplyHelpers(dt);
+
             if (State.Current == MatchState.Boarding && StateTime >= Config.BoardingSeconds)
             {
                 State.TryTransition(MatchState.InFlight, out _);
@@ -227,6 +273,35 @@ namespace SkyCrew.Domain.Match
             if (State.Current == MatchState.InFlight)
             {
                 EvaluateOutcome(dt);
+            }
+        }
+
+        /// <summary>Prestativos sentados e calmos aliviam o medo de quem esta assustado.</summary>
+        private void ApplyHelpers(float dt)
+        {
+            int helpers = 0;
+            foreach (var p in _passengers)
+            {
+                if (p.Profile.Helpfulness >= Config.HelperThreshold && p.IsAtSeat
+                    && p.State != PassengerStateId.Disabled && p.State != PassengerStateId.ReactingToEvent)
+                {
+                    helpers++;
+                }
+            }
+
+            ActiveHelpers = helpers;
+            if (helpers == 0)
+            {
+                return;
+            }
+
+            float amount = Config.HelperSoothePerSecond * helpers * dt;
+            foreach (var p in _passengers)
+            {
+                if (p.Profile.Helpfulness < Config.HelperThreshold && p.Needs.Fear > 0f)
+                {
+                    p.Needs.Soothe(amount);
+                }
             }
         }
 
@@ -267,12 +342,6 @@ namespace SkyCrew.Domain.Match
                 }
             }
 
-            if (allDone)
-            {
-                Finish(true, "Todas as tarefas obrigatorias concluidas");
-                return;
-            }
-
             if (AverageSatisfaction < Config.FailSatisfactionThreshold)
             {
                 _lowSatisfactionTime += dt;
@@ -287,9 +356,17 @@ namespace SkyCrew.Domain.Match
                 _lowSatisfactionTime = 0f;
             }
 
+            // A viagem vai ate o pouso: o loop de pedidos e eventos continua depois das obrigatorias.
             if (FlightTime >= Config.FlightSeconds)
             {
-                Finish(false, "O voo terminou com tarefas pendentes");
+                if (allDone)
+                {
+                    Finish(true, "Pouso tranquilo: todas as tarefas obrigatorias concluidas");
+                }
+                else
+                {
+                    Finish(false, "O avião pousou com tarefas obrigatórias pendentes");
+                }
             }
         }
 
@@ -327,7 +404,7 @@ namespace SkyCrew.Domain.Match
                 if (t.State == TaskState.Failed) results.TasksFailed++;
             }
 
-            results.Score = ScoreFormula.Compute(Score, results.AverageSatisfaction, FlightTimeLeft, victory);
+            results.Score = ScoreFormula.Compute(Score, results.AverageSatisfaction, victory);
             foreach (var e in Score.Entries)
             {
                 results.Lines.Add($"{e.Reason}: {(e.Amount >= 0 ? "+" : "")}{e.Amount}");
@@ -355,6 +432,8 @@ namespace SkyCrew.Domain.Match
             _lowSatisfactionTime = 0f;
             _resultsGenerated = false;
             _seatbeltManual = false;
+            _brokenEquipment.Clear();
+            ActiveHelpers = 0;
             Results = null;
             StateTime = 0f;
             FlightTime = 0f;
@@ -378,12 +457,33 @@ namespace SkyCrew.Domain.Match
     public static class ItemTypes
     {
         public const string Water = "agua";
+        public const string Snack = "lanche";
+        public const string Blanket = "cobertor";
         public const string Suitcase = "mala";
         public const string Trash = "lixo";
+        public const string Mop = "esfregao";
+        public const string Cart = "carrinho";
 
         public static ServiceKind ToService(string itemType)
         {
-            return itemType == Water ? ServiceKind.Water : ServiceKind.None;
+            switch (itemType)
+            {
+                case Water: return ServiceKind.Water;
+                case Snack: return ServiceKind.Snack;
+                case Blanket: return ServiceKind.Blanket;
+                default: return ServiceKind.None;
+            }
+        }
+
+        public static string FromService(ServiceKind kind)
+        {
+            switch (kind)
+            {
+                case ServiceKind.Water: return Water;
+                case ServiceKind.Snack: return Snack;
+                case ServiceKind.Blanket: return Blanket;
+                default: return null;
+            }
         }
     }
 }

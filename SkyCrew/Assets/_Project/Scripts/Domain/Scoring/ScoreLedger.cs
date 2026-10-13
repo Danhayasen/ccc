@@ -76,43 +76,40 @@ namespace SkyCrew.Domain.Scoring
 
     public readonly struct ScoreBreakdown
     {
-        public ScoreBreakdown(int taskRewards, int taskPenalties, int satisfactionBonus, int timeBonus, int total, int stars)
+        public ScoreBreakdown(int taskRewards, int taskPenalties, int satisfactionBonus, int total, int stars)
         {
             TaskRewards = taskRewards;
             TaskPenalties = taskPenalties;
             SatisfactionBonus = satisfactionBonus;
-            TimeBonus = timeBonus;
             Total = total;
             Stars = stars;
         }
 
+        /// <summary>Recompensas de tarefas, incluindo bonus de resposta rapida.</summary>
         public int TaskRewards { get; }
         public int TaskPenalties { get; }
         public int SatisfactionBonus { get; }
-        public int TimeBonus { get; }
         public int Total { get; }
         public int Stars { get; }
     }
 
     /// <summary>
     /// Formula de pontuacao (documentada em Docs/ARCHITECTURE.md):
-    /// total = recompensas - penalidades + satisfacao_media * 500 + segundos_restantes * 2 (max 300)
-    /// Bonus de tempo so vale em vitoria. Estrelas: 1 >= 400, 2 >= 800, 3 >= 1200 (0 em derrota).
+    /// total = recompensas (com bonus de resposta rapida) - penalidades + satisfacao_media * 500.
+    /// Estrelas (so em vitoria): 1 >= 2000, 2 >= 3000, 3 >= 4000. Calibradas pelo teste
+    /// LoopSoakTests.CalibragemDePontos: reagir em ~5 s rende ~4600 pontos, ~15 s ~3500,
+    /// ~25 s ~2800; fazer so as obrigatorias fica abaixo de 1000.
     /// </summary>
     public static class ScoreFormula
     {
         public const int SatisfactionWeight = 500;
-        public const int PointsPerSecondLeft = 2;
-        public const int MaxTimeBonus = 300;
-        public static readonly int[] StarThresholds = { 400, 800, 1200 };
+        public static readonly int[] StarThresholds = { 2000, 3000, 4000 };
 
-        public static ScoreBreakdown Compute(ScoreLedger ledger, float averageSatisfaction,
-                                             float secondsLeft, bool victory)
+        public static ScoreBreakdown Compute(ScoreLedger ledger, float averageSatisfaction, bool victory)
         {
             float sat = averageSatisfaction < 0f ? 0f : (averageSatisfaction > 1f ? 1f : averageSatisfaction);
             int satisfactionBonus = (int)Math.Round(sat * SatisfactionWeight);
-            int timeBonus = victory ? Math.Min(MaxTimeBonus, (int)Math.Max(0f, secondsLeft) * PointsPerSecondLeft) : 0;
-            int total = Math.Max(0, ledger.Rewards - ledger.Penalties + satisfactionBonus + timeBonus);
+            int total = Math.Max(0, ledger.Rewards - ledger.Penalties + satisfactionBonus);
 
             int stars = 0;
             if (victory)
@@ -126,7 +123,7 @@ namespace SkyCrew.Domain.Scoring
                 }
             }
 
-            return new ScoreBreakdown(ledger.Rewards, ledger.Penalties, satisfactionBonus, timeBonus, total, stars);
+            return new ScoreBreakdown(ledger.Rewards, ledger.Penalties, satisfactionBonus, total, stars);
         }
     }
 }

@@ -12,6 +12,9 @@ namespace SkyCrew.Domain.Interaction
         Dispense,
         Dispose,
         PlaceInZone,
+
+        /// <summary>Usar o item segurado no alvo sem entrega-lo (ex.: esfregao na mancha).</summary>
+        ApplyItem,
     }
 
     /// <summary>Tudo o que e preciso para decidir se uma interacao e valida (sem Unity).</summary>
@@ -91,6 +94,7 @@ namespace SkyCrew.Domain.Interaction
                 case InteractionVerb.Deliver:
                 case InteractionVerb.Dispose:
                 case InteractionVerb.PlaceInZone:
+                case InteractionVerb.ApplyItem:
                     if (handsEmpty)
                     {
                         return InteractionCheck.Deny("Nada nas maos");

@@ -337,10 +337,22 @@ namespace SkyCrew.Domain.Tasks
             }
         }
 
+        /// <summary>Concluir uma tarefa com prazo usando no maximo esta fracao do tempo rende bonus.</summary>
+        public const float QuickResponseFraction = 0.5f;
+
+        /// <summary>Bonus de resposta rapida = recompensa / 4.</summary>
+        public const int QuickResponseDivisor = 4;
+
         private void Complete(TaskRuntime task)
         {
             SetState(task, TaskState.Completed, null);
-            _score.TryApply("tarefa:" + task.Id, task.Definition.Reward, $"Concluida: {task.Definition.DisplayName}");
+            var def = task.Definition;
+            _score.TryApply("tarefa:" + task.Id, def.Reward, $"Concluida: {def.DisplayName}");
+            if (def.TimeLimitSeconds > 0f && task.Elapsed <= def.TimeLimitSeconds * QuickResponseFraction && def.Reward > 0)
+            {
+                _score.TryApply("tarefa_rapida:" + task.Id, def.Reward / QuickResponseDivisor,
+                                $"Atendimento rapido: {def.DisplayName}");
+            }
         }
 
         private void SetState(TaskRuntime task, TaskState state, string reason)

@@ -72,6 +72,8 @@ namespace SkyCrew.Domain.PassengerAI
     {
         public float DecisionInterval = 0.25f;
         public float ThirstRequestThreshold = 0.7f;
+        public float HungerRequestThreshold = 0.75f;
+        public float ColdRequestThreshold = 0.8f;
         public float FearReactThreshold = 0.55f;
         public float FearCalmThreshold = 0.4f;
         public float LavatoryThreshold = 0.85f;
@@ -400,13 +402,18 @@ namespace SkyCrew.Domain.PassengerAI
                         StartReacting();
                         return;
 
-                    case NeedKind.Service when world.CanRequestService && PendingService == ServiceKind.None
-                                               && Needs.Thirst >= _config.ThirstRequestThreshold:
-                        PendingService = ServiceKind.Water;
+                    case NeedKind.Service when world.CanRequestService && PendingService == ServiceKind.None:
+                        var wanted = MostUrgentService();
+                        if (wanted == ServiceKind.None)
+                        {
+                            break; // nada urgente: avalia a proxima necessidade
+                        }
+
+                        PendingService = wanted;
                         if (TryEnter(PassengerStateId.RequestingService))
                         {
-                            Emit(CommandKind.ShowRequest, service: ServiceKind.Water);
-                            ServiceRequested?.Invoke(this, ServiceKind.Water);
+                            Emit(CommandKind.ShowRequest, service: wanted);
+                            ServiceRequested?.Invoke(this, wanted);
                         }
 
                         return;
@@ -415,6 +422,62 @@ namespace SkyCrew.Domain.PassengerAI
                         StartWalking(DestinationKind.Lavatory);
                         return;
                 }
+            }
+        }
+
+        /// <summary>Servico cuja necessidade mais passou do limite (ou None).</summary>
+        public ServiceKind MostUrgentService()
+        {
+            ServiceKind best = ServiceKind.None;
+            float bestExcess = 0f;
+            Consider(Needs.Thirst - _config.ThirstRequestThreshold, ServiceKind.Water);
+            Consider(Needs.Hunger - _config.HungerRequestThreshold, ServiceKind.Snack);
+            Consider(Needs.Cold - _config.ColdRequestThreshold, ServiceKind.Blanket);
+            return best;
+
+            void Consider(float excess, ServiceKind kind)
+            {
+                if (excess >= 0f && (best == ServiceKind.None || excess > bestExcess))
+                {
+                    best = kind;
+                    bestExcess = excess;
+                }
+            }
+        }
+
+        /// <summary>
+        /// O passageiro desiste do pedido (ninguem atendeu a tempo): perde paciencia, apaga o
+        /// balao e volta a ficar sentado. A necessidade continua e pode gerar outro pedido depois.
+        /// </summary>
+        public bool AbandonRequest(float patiencePenalty = 0.2f)
+        {
+            if (PendingService == ServiceKind.None || State == PassengerStateId.Disabled)
+            {
+                return false;
+            }
+
+            PendingService = ServiceKind.None;
+            Needs.DebugSet(patience: Needs.Patience - patiencePenalty);
+            Emit(CommandKind.ClearRequest);
+            if (State == PassengerStateId.RequestingService)
+            {
+                TryEnter(PassengerStateId.Waiting);
+            }
+
+            if (State == PassengerStateId.Waiting)
+            {
+                TryEnter(PassengerStateId.Seated);
+            }
+
+            return true;
+        }
+
+        /// <summary>Susto vindo de evento (sem turbulencia).</summary>
+        public void Scare(float amount)
+        {
+            if (State != PassengerStateId.Disabled)
+            {
+                Needs.Scare(amount);
             }
         }
 

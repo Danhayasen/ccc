@@ -425,6 +425,26 @@ namespace SkyCrew.Domain.Events
             Start(_eligible[_eligible.Count - 1], ctx);
         }
 
+        /// <summary>
+        /// Encerra um evento ativo antes do tempo (ex.: o problema foi resolvido pelo jogador).
+        /// Dispara <see cref="Ended"/> com cancelado = false. Retorna false se nao estiver ativo.
+        /// </summary>
+        public bool TryEnd(string eventId)
+        {
+            for (int i = 0; i < _active.Count; i++)
+            {
+                if (_active[i].Definition.Id == eventId)
+                {
+                    var a = _active[i];
+                    _active.RemoveAt(i);
+                    Ended?.Invoke(a, false);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>Encerra tudo (ex.: fim da partida). Handlers restauram estados temporarios.</summary>
         public void CancelAll()
         {

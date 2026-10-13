@@ -17,6 +17,11 @@ licenciado foi importado.
 | Garrafa de água | `.../Props/Garrafa.fbx` | 136 | 0,09×0,26×0,09 | base | idem |
 | Lixo (papel amassado) | `.../Props/Lixo.fbx` | 20 | 0,14×0,16×0,12 | base | idem |
 | Lixeira | `.../Props/Lixeira.fbx` | 96 | 0,40×0,70×0,43 | base | idem |
+| Lanche | `.../Props/Lanche.fbx` | 68 | 0,20×0,10×0,14 | base | idem |
+| Cobertor | `.../Props/Cobertor.fbx` | 68 | 0,35×0,13×0,26 | base | idem |
+| Esfregão | `.../Props/Esfregao.fbx` | 148 | 0,32×1,20×0,10 | base | idem |
+| Carrinho de serviço | `.../Props/Carrinho.fbx` | 340 | 0,42×1,11×0,87 | piso, centro (alça em −Z) | idem |
+| Mancha de suco | `.../Props/Mancha.fbx` | 84 | 0,79×0,01×0,59 | piso, centro | idem |
 | Comissária | `Art/Characters/Resources/SkyCrew/Personagens/Comissaria.fbx` | 1600 | 0,72×1,72×0,61 | entre os pés | idem |
 | Passageiro 1 (boné) | `.../Personagens/Passageiro_1.fbx` | 1512 | 0,72×1,73×0,59 | entre os pés | idem |
 | Passageiro 2 (bolsa) | `.../Personagens/Passageiro_2.fbx` | 1432 | 0,72×1,77×0,59 | entre os pés | idem |

@@ -47,6 +47,9 @@ namespace SkyCrew.Physics
         private bool _locked;
 
         public string ItemType => _itemType;
+
+        /// <summary>Id unico da instancia (vai nos sinais; tarefas podem exigir este item especifico).</summary>
+        public string InstanceId { get; set; }
         public string DisplayName => _displayName;
         public bool IsHeld { get; private set; }
         public bool IsLocked => _locked;
@@ -57,6 +60,11 @@ namespace SkyCrew.Physics
 
         public void Configure(string itemType, string displayName, PhysicsTuning tuning, Vector3 holdOffset)
         {
+            if (string.IsNullOrEmpty(InstanceId))
+            {
+                InstanceId = $"{itemType}_{GetInstanceID()}";
+            }
+
             _itemType = itemType;
             _displayName = displayName;
             _tuning = tuning;

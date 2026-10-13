@@ -34,6 +34,9 @@ namespace SkyCrew.Player
         private Vector3 _stumbleVelocity;
         private bool _wasGrounded = true;
 
+        /// <summary>Multiplicador de velocidade (ex.: 0,6 puxando o carrinho).</summary>
+        public float SpeedMultiplier { get; set; } = 1f;
+
         public Vector3 Velocity => _planarVelocity + Vector3.up * _verticalVelocity;
         public bool IsGrounded => _controller.isGrounded;
         public bool IsStumbling => _stumbleTime > 0f;
@@ -64,7 +67,7 @@ namespace SkyCrew.Player
             }
 
             Vector3 desired = Quaternion.Euler(0f, cameraYaw, 0f) * new Vector3(moveInput.x, 0f, moveInput.y);
-            float targetSpeed = sprint ? _runSpeed : _walkSpeed;
+            float targetSpeed = (sprint ? _runSpeed : _walkSpeed) * Mathf.Clamp(SpeedMultiplier, 0.1f, 2f);
             Vector3 targetVelocity = desired * targetSpeed;
 
             if (_stumbleTime > 0f)
@@ -137,7 +140,10 @@ namespace SkyCrew.Player
             if (item != null)
             {
                 item.ApplyImpulse(push * Time.deltaTime * 10f, Vector3.zero);
+                return;
             }
+
+            body.GetComponent<ServiceCart>()?.Push(push * 60f);
         }
     }
 }

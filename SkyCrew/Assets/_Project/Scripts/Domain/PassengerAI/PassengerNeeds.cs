@@ -1,3 +1,4 @@
+using System;
 using SkyCrew.Domain.Common;
 
 namespace SkyCrew.Domain.PassengerAI
@@ -6,6 +7,8 @@ namespace SkyCrew.Domain.PassengerAI
     {
         None,
         Water,
+        Snack,
+        Blanket,
     }
 
     /// <summary>Condicoes externas que alteram as necessidades.</summary>
@@ -48,6 +51,8 @@ namespace SkyCrew.Domain.PassengerAI
         public float Comfort { get; private set; }
         public float Fear { get; private set; }
         public float Thirst { get; private set; }
+        public float Hunger { get; private set; }
+        public float Cold { get; private set; }
         public float Lavatory { get; private set; }
 
         /// <summary>Satisfacao geral [0, 1] usada na pontuacao e na condicao de falha.</summary>
@@ -61,6 +66,8 @@ namespace SkyCrew.Domain.PassengerAI
             }
 
             Thirst = MathUtil.Clamp01(Thirst + _profile.ThirstPerSecond * dt);
+            Hunger = MathUtil.Clamp01(Hunger + _profile.HungerPerSecond * dt);
+            Cold = MathUtil.Clamp01(Cold + _profile.ColdPerSecond * dt);
             Lavatory = MathUtil.Clamp01(Lavatory + _profile.LavatoryNeedPerSecond * dt);
 
             if (ctx.WaitingForService)
@@ -86,9 +93,17 @@ namespace SkyCrew.Domain.PassengerAI
 
         public void Serve(ServiceKind kind)
         {
-            if (kind == ServiceKind.Water)
+            switch (kind)
             {
-                Thirst = 0f;
+                case ServiceKind.Water:
+                    Thirst = 0f;
+                    break;
+                case ServiceKind.Snack:
+                    Hunger = 0f;
+                    break;
+                case ServiceKind.Blanket:
+                    Cold = 0f;
+                    break;
             }
 
             Patience = MathUtil.Clamp01(Patience + 0.25f);
@@ -101,6 +116,18 @@ namespace SkyCrew.Domain.PassengerAI
             Patience = MathUtil.Clamp01(Patience + 0.05f);
         }
 
+        /// <summary>Susto sem turbulencia (evento "passageiro assustado").</summary>
+        public void Scare(float amount)
+        {
+            Fear = MathUtil.Clamp01(Fear + Math.Max(0f, amount));
+        }
+
+        /// <summary>Alivio gradual do medo (ex.: vizinho prestativo).</summary>
+        public void Soothe(float amount)
+        {
+            Fear = MathUtil.Clamp01(Fear - Math.Max(0f, amount));
+        }
+
         public void UseLavatory()
         {
             Lavatory = 0f;
@@ -109,8 +136,11 @@ namespace SkyCrew.Domain.PassengerAI
 
         /// <summary>Somente para testes e ferramentas de diagnostico.</summary>
         public void DebugSet(float? patience = null, float? comfort = null, float? fear = null,
-                             float? thirst = null, float? lavatory = null)
+                             float? thirst = null, float? lavatory = null, float? hunger = null,
+                             float? cold = null)
         {
+            if (hunger.HasValue) Hunger = MathUtil.Clamp01(hunger.Value);
+            if (cold.HasValue) Cold = MathUtil.Clamp01(cold.Value);
             if (patience.HasValue) Patience = MathUtil.Clamp01(patience.Value);
             if (comfort.HasValue) Comfort = MathUtil.Clamp01(comfort.Value);
             if (fear.HasValue) Fear = MathUtil.Clamp01(fear.Value);

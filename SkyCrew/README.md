@@ -6,30 +6,30 @@ cooperação online.
 
 - **Engine:** Unity 6 (6000.x) · C# · URP · Input System
 - **Plataforma inicial:** Windows PC
-- **Estado:** Fase 0 concluída e Fase 1 (protótipo mínimo jogável) implementada, **ainda não executada no Editor da Unity** (veja *Estado real*)
+- **Estado:** Fases 0, 1 e 2 implementadas no código; regras testadas (93 testes); **ainda não executado no Editor da Unity** (veja *Estado real*)
 
 ![Elenco](Tools/Blender/previas/elenco.png)
 ![Cabine](Tools/Blender/previas/cabine.png)
 
 *Prévias renderizadas no Blender a partir dos próprios FBX que a Unity importa.*
 
-## Estado real (Fase 1)
+## Estado real
 
 | Sistema | Estado | Evidência |
 |---|---|---|
-| Ciclo da partida (estados, transições, resultado único, reinício) | Implementado e testado | 23 testes EditMode (inclui casos parametrizados) |
-| Tarefas (objetivos modulares, prazo, dependências, recompensa única) | Implementado e testado | 13 testes |
-| Passageiros: necessidades, 7 personalidades, máquina de estados | Implementado e testado | 12 testes |
-| Eventos dinâmicos (turbulência; elegibilidade, compatibilidade, semente) | Implementado e testado | 8 testes |
-| Pontuação (fórmula documentada) e regras de interação | Implementado e testado | 8 testes |
-| Viagem completa do protótipo (3 tarefas + turbulência + vitória/derrota) | Implementado e testado (só regras) | 4 testes de cenário |
-| Jogador (CharacterController, câmera 3ª pessoa, Input System) | Implementado, **compila**, não executado | `verificar.sh` |
-| Interação, pegar/soltar/entregar, física limitada | Implementado, **compila**, não executado | `verificar.sh` |
-| Passageiro com NavMesh em tempo de execução, fila no corredor | Implementado, **compila**, não executado | `verificar.sh` |
-| HUD, pausa e tela de resultados (IMGUI provisório) | Implementado, **compila**, não executado | `verificar.sh` |
-| Cena do protótipo e configuração URP | Preparados; **exigem o Editor** para validar | `SkyCrew > ...` |
-| Modelos 3D (cabine modular, props, 5 personagens) | Gerados e validados no Blender | reimportação dos FBX |
-| Testes PlayMode | Escritos e **compilam**; rodam só na Unity | — |
+| Ciclo da partida (estados, transições, resultado único, reinício, vitória no pouso) | Implementado e testado | 23 testes EditMode |
+| Tarefas (objetivos modulares, alvo por instância, prazo, dependências, recompensa única, bônus de resposta rápida) | Implementado e testado | 17 testes |
+| Passageiros: necessidades (sede, fome, frio, medo, banheiro), 7 personalidades, estados, desistência de pedido, limite de pedidos | Implementado e testado | 19 testes |
+| Personalidades com efeito: prestativo acalma vizinhos, desastrado derruba coisas | Implementado e testado | 2 testes |
+| 7 eventos (turbulência, objeto derrubado, derramamento, corredor bloqueado, geladeira quebrada, mala caída, passageiro assustado) | Implementado e testado (regras) | 15 testes |
+| Pontuação (fórmula documentada, estrelas calibradas por simulação) e regras de interação | Implementado e testado | 8 testes |
+| Viagem completa do protótipo (obrigatórias, vitória no pouso, derrota, reinício) | Implementado e testado (regras) | 4 testes |
+| **Loop principal**: 40 viagens completas seguidas sem travar + calibragem | Testado (regras) | 5 testes (`LoopSoakTests`) |
+| Jogador, interação, física, NavMesh, HUD, pausa, resultados | Implementado, **compila**, não executado | `verificar.sh` |
+| Mancha + esfregão (com escorregão), carrinho puxável que bloqueia o corredor, conserto da geladeira, gavetas de lanche/cobertor | Implementado, **compila**, não executado | `verificar.sh` |
+| Cena do protótipo e configuração URP | Preparados; **exigem o Editor** | `SkyCrew > ...` |
+| Modelos 3D (cabine modular, 10 props, 5 personagens) | Gerados e validados no Blender | reimportação dos FBX |
+| Testes PlayMode (5) | Escritos e **compilam**; rodam só na Unity | — |
 | Animação | Provisória (procedural); rig na Fase 3 | — |
 | Áudio, menu principal, multiplayer, salvamento | Ainda não implementados | ROADMAP |
 
@@ -52,16 +52,27 @@ WASD mover · Mouse câmera · Shift correr · Espaço pular · **E** interagir 
 
 ### Objetivo da viagem do protótipo
 
-1. **Embarque (30 s):** guarde a mala esquecida no corredor num bagageiro. A passageira Lia embarca e caminha até a poltrona 2F.
-2. **Em voo:** a Bia (exigente) pede **água**. Pegue uma garrafa na geladeira da cozinha e entregue.
-3. Aos 25 s de voo vem a **turbulência**: o aviso de cinto acende, objetos voam, você tropeça, e o Otto (ansioso) entra em pânico. **Converse** com ele.
-4. Extra: recolha o lixo derrubado e jogue na lixeira.
+O voo dura 4 minutos e você vence ao **pousar** com as 3 tarefas obrigatórias feitas:
+1. **Embarque (30 s):** guarde a **mala esquecida** no corredor num bagageiro. A Lia embarca e caminha até a 2F.
+2. **Em voo:** a Bia pede **água**. Pegue na geladeira da cozinha e entregue.
+3. Aos 25 s de voo vem a **turbulência**: o aviso de cinto acende, objetos voam, você tropeça e o Otto entra em pânico. **Converse** com ele.
 
-Você vence ao concluir as 3 tarefas obrigatórias. Você perde se o tempo de voo (4 min) acabar, se uma tarefa obrigatória falhar ou se a satisfação da cabine despencar.
+Durante o voo inteiro surgem pedidos (água, lanche, cobertor) e imprevistos, cada um com sua tarefa:
+
+| Imprevisto | O que fazer |
+|---|---|
+| Objeto derrubado (o desastrado derruba mais) / lixo da turbulência | Pegar e jogar na lixeira da cozinha |
+| Derramamento no corredor | Pegar o esfregão (armário do fundo) e esfregar 3 vezes. Correr por cima faz escorregar! |
+| Corredor bloqueado pelo carrinho | **E** para segurar a alça e levar até a cozinha. Enquanto isso os passageiros não passam |
+| Geladeira quebrada | Dar 3 batidas nela (**E**); até lá não sai água |
+| Mala caiu do bagageiro | Guardar de novo |
+| Passageiro assustado | Conversar |
+
+Passageiros ignorados desistem do pedido e ficam mais impacientes. O Rui (prestativo) acalma quem está com medo por perto. Resolver rápido (até metade do prazo) rende +25%. Você perde se uma tarefa obrigatória falhar, se a satisfação da cabine despencar ou se o avião pousar com obrigatórias pendentes.
 
 ## Testes e verificação
 
-- **Na Unity:** *Window > General > Test Runner* → EditMode (68 testes de regras) e PlayMode (4 testes de cena).
+- **Na Unity:** *Window > General > Test Runner* → EditMode (93 testes de regras) e PlayMode (5 testes de cena).
 - **Sem a Unity** (Linux/Mac/Windows com .NET 8):
   ```bash
   Tools/Verificacao/verificar.sh

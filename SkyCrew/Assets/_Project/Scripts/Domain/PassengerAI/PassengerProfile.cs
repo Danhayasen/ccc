@@ -24,7 +24,8 @@ namespace SkyCrew.Domain.PassengerAI
                                 float fearSensitivity, float fearRecoveryPerSecond,
                                 float comfortDecayPerSecond, float lavatoryNeedPerSecond,
                                 float walkSpeed, float helpfulness, float clumsiness,
-                                float complainTendency)
+                                float complainTendency, float hungerPerSecond = 0.003f,
+                                float coldPerSecond = 0.002f)
         {
             Personality = personality;
             DisplayName = displayName;
@@ -38,6 +39,8 @@ namespace SkyCrew.Domain.PassengerAI
             Helpfulness = Common.MathUtil.Clamp01(helpfulness);
             Clumsiness = Common.MathUtil.Clamp01(clumsiness);
             ComplainTendency = Common.MathUtil.Clamp01(complainTendency);
+            HungerPerSecond = Math.Max(0f, hungerPerSecond);
+            ColdPerSecond = Math.Max(0f, coldPerSecond);
         }
 
         public Personality Personality { get; }
@@ -52,6 +55,8 @@ namespace SkyCrew.Domain.PassengerAI
         public float Helpfulness { get; }
         public float Clumsiness { get; }
         public float ComplainTendency { get; }
+        public float HungerPerSecond { get; }
+        public float ColdPerSecond { get; }
 
         /// <summary>Copia com outra taxa de sede (usado para criar o passageiro "sedento" do prototipo).</summary>
         public PassengerProfile WithThirst(float thirstPerSecond)
@@ -59,7 +64,7 @@ namespace SkyCrew.Domain.PassengerAI
             return new PassengerProfile(Personality, DisplayName, PatienceDecayWhileWaiting, thirstPerSecond,
                                         FearSensitivity, FearRecoveryPerSecond, ComfortDecayPerSecond,
                                         LavatoryNeedPerSecond, WalkSpeed, Helpfulness, Clumsiness,
-                                        ComplainTendency);
+                                        ComplainTendency, HungerPerSecond, ColdPerSecond);
         }
     }
 

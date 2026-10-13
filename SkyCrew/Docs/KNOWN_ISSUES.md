@@ -28,3 +28,6 @@
 - O passageiro "desliza" para dentro da poltrona (o vão entre fileiras não é navegável de propósito).
 - Desempenho **não medido**.
 - O tremor da turbulência é aplicado à câmera e aos objetos. A cabine em si não inclina, porque isso desalinharia a NavMesh.
+- **Carrinho:** ao ser pego, mantém o deslocamento em relação ao jogador (em linha reta pelo corredor). Se travar numa parede e o jogador se afastar mais de 1,2 m, ele se solta sozinho. A sensação de controle precisa ser ajustada no Editor.
+- **Corredor bloqueado:** os passageiros que precisam passar tentam de novo 3 vezes e depois voltam para a poltrona (teleporte de recuperação). Funciona, mas falta uma reação visual de "esperando".
+- O **robô** dos testes de resistência não anda pela cabine, então as notas calibradas valem para o tempo de reação e não incluem o deslocamento. Recalibrar com jogadores reais.

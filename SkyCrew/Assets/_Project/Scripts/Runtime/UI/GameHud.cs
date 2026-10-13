@@ -255,6 +255,12 @@ namespace SkyCrew.UI
                 Color.Lerp(MaterialLibrary.Vermelho, MaterialLibrary.Verde, sat));
             GUI.Label(new Rect(x + 14 * s, y + 92 * s, w, 30 * s), $"Pontos: {session.Score.Total}", _text);
 
+            if (!session.IsEquipmentAvailable(SkyCrew.Domain.Content.PrototypeScenario.EquipmentFridge))
+            {
+                Fill(new Rect(x, y + 186f * s, w, 34f * s), new Color(0.6f, 0.1f, 0.1f, 0.85f));
+                GUI.Label(new Rect(x, y + 186f * s, w, 34f * s), "Geladeira quebrada!", new GUIStyle(_prompt) { fontSize = Mathf.RoundToInt(17 * s) });
+            }
+
             if (session.SeatbeltSignOn)
             {
                 bool blink = Mathf.Repeat(Time.unscaledTime, 0.8f) < 0.5f;
@@ -342,9 +348,10 @@ namespace SkyCrew.UI
                     text = "!!";
                     bg = new Color(1f, 0.6f, 0.55f);
                 }
-                else if (p.ShownRequest == ServiceKind.Water)
+                else if (p.ShownRequest != ServiceKind.None)
                 {
-                    text = "Água!";
+                    text = p.ShownRequest == ServiceKind.Water ? "Água!"
+                         : p.ShownRequest == ServiceKind.Snack ? "Lanche!" : "Cobertor!";
                     bg = new Color(0.8f, 0.92f, 1f);
                 }
 
@@ -404,7 +411,7 @@ namespace SkyCrew.UI
 
             ScoreBreakdown b = r.Score;
             GUILayout.Label($"Satisfação média: {r.AverageSatisfaction:P0}  (+{b.SatisfactionBonus})", _text);
-            GUILayout.Label($"Bônus de tempo: +{b.TimeBonus}", _text);
+            GUILayout.Label($"Tarefas (com bônus de resposta rápida): +{b.TaskRewards}   Penalidades: -{b.TaskPenalties}", _text);
             GUILayout.Label($"Tarefas concluídas: {r.TasksCompleted}   Falhas: {r.TasksFailed}", _text);
             GUILayout.Label($"Pontuação final: {b.Total}", _title);
             GUILayout.Space(16f * s);

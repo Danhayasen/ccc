@@ -20,7 +20,13 @@ namespace SkyCrew.Tests.EditMode
             _s = new MatchSession(PrototypeScenario.CreateConfig(seed: 2024));
             _scenario = PrototypeScenario.Install(_s);
             _trashRequested = 0;
-            _scenario.TrashSpawnRequested += (n, id) => _trashRequested += n;
+            _scenario.WorldRequested += r =>
+            {
+                if (r.Kind == WorldRequestKind.Trash && r.PassengerId == null)
+                {
+                    _trashRequested += r.ItemIds.Count;
+                }
+            };
         }
 
         private void Run(float seconds)
@@ -63,7 +69,12 @@ namespace SkyCrew.Tests.EditMode
         public void ViagemCompletaComVitoria()
         {
             Start();
-            _s.Signal(GameplaySignal.PlacedInZone(ItemTypes.Suitcase, PrototypeScenario.ZoneOverheadBin));
+            _s.Signal(GameplaySignal.PlacedInZone(ItemTypes.Suitcase, PrototypeScenario.ZoneOverheadBin,
+                                                  itemId: "outra_mala"));
+            Assert.AreEqual(TaskState.Active, _s.Tasks.Get(PrototypeScenario.TaskStoreSuitcase).State,
+                            "so a mala esquecida conta para a tarefa obrigatoria");
+            _s.Signal(GameplaySignal.PlacedInZone(ItemTypes.Suitcase, PrototypeScenario.ZoneOverheadBin,
+                                                  itemId: PrototypeScenario.ForgottenSuitcaseId));
             Assert.AreEqual(TaskState.Completed, _s.Tasks.Get(PrototypeScenario.TaskStoreSuitcase).State);
 
             Run(_s.Config.BoardingSeconds + 0.1f);
@@ -85,11 +96,15 @@ namespace SkyCrew.Tests.EditMode
             Assert.AreEqual(PrototypeScenario.TrashPerTurbulence, _trashRequested);
 
             Assert.IsTrue(_s.TryTalkToPassenger(alvo));
-            _s.Tick(0.05f);
-            Assert.AreEqual(MatchState.Results, _s.State.Current);
+            Assert.AreEqual(TaskState.Completed, calma.State);
+            int rewardsAntesDoPouso = _s.Score.Rewards;
+            Run(_s.Config.FlightSeconds);
+            Assert.AreEqual(MatchState.Results, _s.State.Current, _s.Results?.Reason);
             Assert.IsTrue(_s.Results.Victory);
-            Assert.GreaterOrEqual(_s.Results.Score.Stars, 1);
-            Assert.AreEqual(150 + 200 + 200, _s.Score.Rewards);
+            Assert.Greater(_s.Score.Penalties, 0, "pedidos ignorados custam pontos");
+            Assert.AreEqual(0, _s.Results.Score.Stars, "so as obrigatorias: vence, mas sem estrelas");
+            // 150 (mala) + 200 + 50 (agua, rapida) + 200 + 50 (acalmar, rapido)
+            Assert.AreEqual(150 + 200 + 50 + 200 + 50, rewardsAntesDoPouso);
             Assert.IsTrue(_s.Passengers.All(p => p.State == PassengerStateId.Disabled));
         }
 
@@ -97,7 +112,8 @@ namespace SkyCrew.Tests.EditMode
         public void IgnorarAAguaFazAPartidaFalhar()
         {
             Start();
-            _s.Signal(GameplaySignal.PlacedInZone(ItemTypes.Suitcase, PrototypeScenario.ZoneOverheadBin));
+            _s.Signal(GameplaySignal.PlacedInZone(ItemTypes.Suitcase, PrototypeScenario.ZoneOverheadBin,
+                                                  itemId: PrototypeScenario.ForgottenSuitcaseId));
             Run(_s.Config.BoardingSeconds + 0.1f);
             Run(120f);
             Assert.AreEqual(MatchState.Failed, _s.State.Current);
