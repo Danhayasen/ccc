@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compila o MESMO codigo de Assets/_Project/Scripts/Domain que a Unity compila,
+       com o perfil .NET Standard 2.1 e C# 9 (o que a Unity 6 suporta). -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>SkyCrew.Domain</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Assets/_Project/Scripts/Domain/**/*.cs" />
+  </ItemGroup>
+</Project>

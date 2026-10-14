@@ -1,0 +1,6 @@
+<Project>
+  <!-- Referencias da Unity baixadas por preparar_referencias.sh -->
+  <ItemGroup>
+    <Reference Include="$(MSBuildThisFileDirectory)../refs/UnityEngine/*.dll" Private="false" />
+  </ItemGroup>
+</Project>

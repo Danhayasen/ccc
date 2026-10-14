@@ -1,0 +1,73 @@
+:root {
+  --azul: #2452a8; --azul-escuro: #0b1e42; --azul-claro: #6fa3dc; --creme: #f4f1ea;
+  --amarelo: #f5c842; --vermelho: #e0574f; --verde: #5db760; --painel: rgba(8, 18, 40, 0.72);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--azul-escuro); color: var(--creme);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+#palco { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+[hidden] { display: none !important; }
+kbd { background: var(--creme); color: #102040; border-radius: 6px; padding: 1px 7px; font-weight: 700; font-size: 0.9em; }
+
+#hud { position: fixed; inset: 0; pointer-events: none; }
+#painel { position: absolute; left: 16px; top: 16px; width: min(320px, 44vw); background: var(--painel); border-radius: 14px; padding: 12px 14px; }
+#fase { font-size: 22px; font-weight: 800; }
+.rotulo { font-size: 12px; opacity: 0.8; margin-top: 8px; }
+.barra { height: 12px; background: rgba(255, 255, 255, 0.15); border-radius: 6px; overflow: hidden; }
+.barra.fina { height: 6px; }
+.barra i { display: block; height: 100%; width: 0; background: var(--azul-claro); transition: width 0.2s; }
+#pontos { margin-top: 8px; font-weight: 700; font-size: 18px; }
+#cinto { margin-top: 10px; background: var(--amarelo); color: #2b2100; font-weight: 800; border-radius: 8px; padding: 6px 8px; animation: pisca 0.8s infinite alternate; }
+#geladeira { margin-top: 8px; color: var(--vermelho); font-weight: 700; }
+@keyframes pisca { from { opacity: 1; } to { opacity: 0.55; } }
+
+#tarefas { position: absolute; right: 16px; top: 16px; width: min(380px, 46vw); max-height: 60vh; overflow: hidden; background: var(--painel); border-radius: 14px; padding: 10px 12px; }
+#tarefas h3 { margin: 0 0 6px; font-size: 16px; } #tarefas h3 small { font-weight: 400; opacity: 0.6; }
+.tarefa { border-left: 4px solid var(--azul-claro); padding: 4px 8px; margin: 6px 0; background: rgba(255, 255, 255, 0.05); border-radius: 0 8px 8px 0; }
+.tarefa > span { font-weight: 700; } .tarefa em { font-style: normal; font-size: 11px; background: var(--amarelo); color: #2b2100; border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+.tarefa b { float: right; } .tarefa b.urgente { color: var(--vermelho); }
+.tarefa p { margin: 2px 0 0; font-size: 13px; opacity: 0.85; }
+.tarefa.p-Urgent { border-color: var(--vermelho); } .tarefa.p-High { border-color: var(--amarelo); }
+.tarefa.Completed { opacity: 0.6; border-color: var(--verde); } .tarefa.Failed { opacity: 0.6; border-color: var(--vermelho); }
+.vazio { opacity: 0.7; font-size: 13px; }
+
+#avisos { position: absolute; right: 16px; bottom: 90px; display: flex; flex-direction: column-reverse; gap: 6px; align-items: flex-end; }
+.aviso { background: var(--painel); border-left: 6px solid var(--azul-claro); padding: 8px 12px; border-radius: 8px; font-weight: 600; transition: opacity 0.4s, transform 0.4s; }
+.aviso.sucesso { border-color: var(--verde); } .aviso.falha { border-color: var(--vermelho); } .aviso.importante { border-color: var(--amarelo); }
+.aviso.saindo { opacity: 0; transform: translateX(20px); }
+
+#acao { position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%); background: var(--painel); padding: 10px 16px; border-radius: 12px; font-size: 18px; font-weight: 700; white-space: nowrap; }
+#acao.negado { opacity: 0.85; } #acao span { color: var(--vermelho); }
+#feedback { position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%); color: var(--amarelo); font-weight: 800; font-size: 20px; text-shadow: 0 2px 4px #000; }
+#dica { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); font-size: 13px; opacity: 0.75; white-space: nowrap; text-shadow: 0 1px 3px #000; }
+#centro { position: fixed; left: 50%; top: 35%; transform: translateX(-50%); background: rgba(6, 16, 40, 0.88); padding: 18px 30px; border-radius: 16px; font-size: 28px; font-weight: 800; pointer-events: none; }
+
+.balao { position: absolute; left: 0; top: 0; background: #d0e8ff; color: #0b1e42; font-weight: 800; padding: 4px 10px; border-radius: 14px; font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.4); white-space: nowrap; }
+.balao.medo { background: #ffb0a8; animation: treme 0.15s infinite alternate; }
+@keyframes treme { from { margin-left: -2px; } to { margin-left: 2px; } }
+
+.tela, #carregando { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(5, 14, 36, 0.78); padding: 16px; }
+.cartao { width: min(460px, 100%); max-height: 92vh; overflow: auto; background: #102a5c; border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+.cartao.largo { width: min(680px, 100%); text-align: left; }
+.cartao h1 { font-size: 56px; margin: 0; letter-spacing: 0.02em; } .cartao h2 { margin-top: 0; }
+.lema { margin: 4px 0 8px; } .pequeno { font-size: 13px; opacity: 0.8; }
+button { display: block; width: 100%; margin: 8px 0; padding: 12px 16px; font-size: 17px; font-weight: 700; border: 0; border-radius: 12px;
+  background: #24467f; color: var(--creme); cursor: pointer; }
+button:hover:not(:disabled) { background: #2f5aa0; } button:disabled { opacity: 0.45; cursor: default; }
+button.principal { background: var(--amarelo); color: #2b2100; }
+button.principal:hover { background: #ffd95e; }
+#config-campos label { display: block; text-align: left; margin: 10px 0; } #config-campos output { float: right; opacity: 0.8; }
+#config-campos input[type=range] { width: 100%; } #config-campos .caixa input { margin-right: 6px; }
+#roupas-lista .linha { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+#roupas-lista .linha button { width: auto; margin: 4px 0; padding: 6px 14px; font-size: 14px; }
+#roupas-lista i { font-style: normal; font-size: 12px; opacity: 0.6; } #roupas-lista .bloqueado { opacity: 0.6; }
+#res-estrelas { font-size: 48px; text-align: center; color: rgba(255,255,255,0.2); } #res-estrelas .cheia { color: var(--amarelo); }
+#res-detalhes .total { font-size: 24px; font-weight: 800; } .desbloqueio { color: var(--amarelo); font-weight: 700; }
+#carregando .barra { margin: 18px 0 10px; height: 14px; } #carregando .barra i { background: var(--amarelo); }
+#carregando.erro p { color: var(--vermelho); }
+
+@media (max-width: 700px) {
+  #tarefas { top: auto; bottom: 110px; max-height: 30vh; }
+  #dica { display: none; }
+}
