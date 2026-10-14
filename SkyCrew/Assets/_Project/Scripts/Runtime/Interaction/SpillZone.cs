@@ -34,7 +34,7 @@ namespace SkyCrew.Interaction
         public string GetPrompt(Interactor interactor) => "Esfregar a mancha";
         public string GetAcceptedItemType(Interactor interactor) => ItemTypesUnity.Mop;
         public bool IsAvailable(Interactor interactor) => _swipes < PrototypeScenario.CleanSwipes;
-        public int Priority => 2;
+        public int GetPriority(Interactor interactor) => InteractionPriorities.Station;
         public Vector3 InteractionPoint => transform.position;
 
         public bool Execute(Interactor interactor)

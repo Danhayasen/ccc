@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkyCrew</title>
+<link rel="stylesheet" href="estilo.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="palco"></canvas>
+
+<div id="hud" hidden>
+  <section id="painel">
+    <div id="fase">Embarque</div>
+    <div class="rotulo">Satisfação da cabine</div>
+    <div id="satisfacao" class="barra"><i></i></div>
+    <div id="pontos">Pontos: 0</div>
+    <div class="rotulo">Rota do voo</div>
+    <div id="rota" class="barra fina"><i></i></div>
+    <div id="cinto" hidden>APERTEM OS CINTOS — Turbulência</div>
+    <div id="geladeira" hidden>Geladeira quebrada! Dê umas batidas (E)</div>
+  </section>
+  <section id="tarefas"></section>
+  <div id="avisos"></div>
+  <div id="baloes"></div>
+  <div id="acao" hidden></div>
+  <div id="feedback" hidden></div>
+  <div id="dica">WASD mover · Mouse câmera · Shift correr · Espaço pular · E interagir · Tab tarefas · Esc pausar</div>
+</div>
+<div id="centro" hidden></div>
+
+<div id="menu" class="tela" hidden>
+  <div class="cartao">
+    <h1>SkyCrew</h1>
+    <p class="lema">Juntos, mantemos todos a bordo!</p>
+    <p id="estatisticas" class="pequeno"></p>
+    <button id="btn-jogar" class="principal">Jogar (Avião SkyCrew 1)</button>
+    <button id="btn-ajuda">Como jogar</button>
+    <button id="btn-roupas">Uniformes e acessórios</button>
+    <button id="btn-config">Configurações</button>
+    <p class="pequeno">Versão de navegador do protótipo. Precisa de teclado e mouse. Modo cooperativo online: em desenvolvimento.</p>
+  </div>
+</div>
+
+<div id="ajuda" class="tela" hidden>
+  <div class="cartao largo">
+    <h2>Como jogar</h2>
+    <p>Você é a comissária de bordo. Cuide dos passageiros até o pouso (4 minutos de voo).</p>
+    <ul>
+      <li><b>Obrigatório para vencer:</b> guardar a mala esquecida no bagageiro, servir água para quem pedir primeiro e acalmar o passageiro assustado na turbulência.</li>
+      <li>Pedidos aparecem em balões: <b>Água</b> (geladeira azul na cozinha, à frente), <b>Lanche</b> (gaveta amarela) e <b>Cobertor</b> (armário de cima).</li>
+      <li>Lixo vai na lixeira da cozinha. Mancha no corredor: pegue o esfregão no fundo da cabine e esfregue 3 vezes.</li>
+      <li>Carrinho no corredor: aperte E para puxar e leve até a cozinha. Geladeira quebrada: bata nela 3 vezes.</li>
+      <li>Responder rápido dá bônus. Se a satisfação da cabine ficar muito baixa, a viagem termina.</li>
+    </ul>
+    <p><kbd>WASD</kbd> mover · <kbd>Mouse</kbd> câmera · <kbd>Shift</kbd> correr · <kbd>Espaço</kbd> pular · <kbd>E</kbd> pegar, entregar, conversar e usar (sem alvo: larga o item) · <kbd>Tab</kbd> todas as tarefas · <kbd>Esc</kbd> pausa</p>
+    <button id="ajuda-voltar">Voltar</button>
+  </div>
+</div>
+
+<div id="config" class="tela" hidden>
+  <div class="cartao">
+    <h2>Configurações</h2>
+    <div id="config-campos"></div>
+    <button id="config-salvar" class="principal">Salvar e voltar</button>
+  </div>
+</div>
+
+<div id="roupas" class="tela" hidden>
+  <div class="cartao largo">
+    <h2>Uniformes e acessórios</h2>
+    <p id="roupas-resumo" class="pequeno"></p>
+    <div id="roupas-lista"></div>
+    <button id="roupas-voltar">Voltar</button>
+  </div>
+</div>
+
+<div id="pausa" class="tela" hidden>
+  <div class="cartao">
+    <h2>Pausado</h2>
+    <button id="btn-continuar" class="principal">Continuar</button>
+    <button id="btn-reiniciar">Reiniciar viagem</button>
+    <button id="btn-pausa-config">Configurações</button>
+    <button id="btn-pausa-menu">Menu principal</button>
+  </div>
+</div>
+
+<div id="resultado" class="tela" hidden>
+  <div class="cartao largo">
+    <h2 id="res-titulo"></h2>
+    <div id="res-estrelas"></div>
+    <div id="res-detalhes"></div>
+    <button id="btn-de-novo" class="principal">Jogar de novo</button>
+    <button id="btn-res-menu">Menu principal</button>
+  </div>
+</div>
+
+<div id="carregando">
+  <div class="cartao">
+    <h1>SkyCrew</h1>
+    <div class="barra"><i></i></div>
+    <p>Preparando a aeronave...</p>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

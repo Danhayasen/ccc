@@ -371,5 +371,23 @@ namespace SkyCrew.Tests.EditMode
             Assert.AreEqual(4, InteractionTargetSelector.SelectBest(c));
             Assert.AreEqual(-1, InteractionTargetSelector.SelectBest(new List<InteractionCandidate>()));
         }
+
+        [Test]
+        public void ItemNoChaoGanhaDePassageiroQueNaoPrecisaDeNada()
+        {
+            // Mala no corredor logo a frente e um passageiro sentado ao lado (ambos validos).
+            var mala = new InteractionCandidate(0.6f, 10f, InteractionPriorities.Item, true);
+            var tranquilo = new InteractionCandidate(0.8f, 40f, InteractionPriorities.Passenger(false, false), true);
+            Assert.AreEqual(0, InteractionTargetSelector.SelectBest(new List<InteractionCandidate> { mala, tranquilo }));
+
+            // Em panico (conversar acalma) ou recebendo o que pediu: o passageiro vem primeiro.
+            var panico = new InteractionCandidate(0.8f, 40f, InteractionPriorities.Passenger(true, false), true);
+            Assert.AreEqual(1, InteractionTargetSelector.SelectBest(new List<InteractionCandidate> { mala, panico }));
+            var entrega = new InteractionCandidate(0.8f, 40f, InteractionPriorities.Passenger(false, true), true);
+            var carrinho = new InteractionCandidate(0.7f, 20f, InteractionPriorities.Station, true);
+            Assert.AreEqual(1, InteractionTargetSelector.SelectBest(new List<InteractionCandidate> { carrinho, entrega }));
+            // Maos vazias perto de quem pediu algo: o carrinho continua alcancavel.
+            Assert.AreEqual(0, InteractionTargetSelector.SelectBest(new List<InteractionCandidate> { carrinho, tranquilo }));
+        }
     }
 }

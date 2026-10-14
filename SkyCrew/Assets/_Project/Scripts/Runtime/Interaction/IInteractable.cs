@@ -21,7 +21,8 @@ namespace SkyCrew.Interaction
         /// <summary>Disponivel agora (ex.: passageiro nao pediu nada).</summary>
         bool IsAvailable(Interactor interactor);
 
-        int Priority { get; }
+        /// <summary>Preferencia entre alvos validos (InteractionPriorities).</summary>
+        int GetPriority(Interactor interactor);
 
         /// <summary>Ponto usado para distancia/angulo.</summary>
         Vector3 InteractionPoint { get; }

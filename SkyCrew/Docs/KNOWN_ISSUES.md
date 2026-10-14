@@ -34,3 +34,10 @@
 - **Carrinho:** ao ser pego, mantém o deslocamento em relação ao jogador (em linha reta pelo corredor). Se travar numa parede e o jogador se afastar mais de 1,2 m, ele se solta sozinho. A sensação de controle precisa ser ajustada no Editor.
 - **Corredor bloqueado:** os passageiros que precisam passar tentam de novo 3 vezes e depois voltam para a poltrona (teleporte de recuperação). Funciona, mas falta uma reação visual de "esperando".
 - O **robô** dos testes de resistência não anda pela cabine, então as notas calibradas valem para o tempo de reação e não incluem o deslocamento. Recalibrar com jogadores reais.
+
+## Versão de navegador
+- Testada só no Chromium headless (WebGL por software); falta jogar em navegadores reais com GPU.
+- Exige teclado e mouse; celular não é suportado.
+- Corrigido nas duas versões: perto das poltronas o E sempre escolhia "Conversar" e não pegava a mala, o lixo
+  nem o carrinho. Agora conversar só tem prioridade com passageiro em pânico ou recebendo o que pediu
+  (`InteractionPriorities`, com teste).

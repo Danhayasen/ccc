@@ -56,7 +56,8 @@ namespace SkyCrew.PassengerAI
             return true;
         }
 
-        public int Priority => 3;
+        public int GetPriority(Interactor interactor) => InteractionPriorities.Passenger(
+            _passenger.IsReacting, Holding(interactor) && IsAvailable(interactor));
         public Vector3 InteractionPoint => transform.position + Vector3.up * 0.5f;
 
         public bool Execute(Interactor interactor)

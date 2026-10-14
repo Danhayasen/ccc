@@ -114,7 +114,7 @@ namespace SkyCrew.Physics
         public string GetPrompt(Interactor interactor) => "Pegar " + _displayName;
         public string GetAcceptedItemType(Interactor interactor) => null;
         public bool IsAvailable(Interactor interactor) => !IsHeld && !_locked;
-        public int Priority => 1;
+        public int GetPriority(Interactor interactor) => InteractionPriorities.Item;
         public Vector3 InteractionPoint => transform.position;
 
         public bool Execute(Interactor interactor)

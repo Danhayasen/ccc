@@ -136,6 +136,24 @@ namespace SkyCrew.Domain.Interaction
         public bool Valid { get; }
     }
 
+    /// <summary>
+    /// Prioridade de alvo (maior = preferido entre alvos validos). Conversar so vem primeiro quando
+    /// e util (passageiro em panico) ou quando da para entregar o que ele pediu; senao, perto das
+    /// poltronas, o E sempre escolheria "Conversar" e nunca pegaria a mala, o lixo ou o carrinho.
+    /// </summary>
+    public static class InteractionPriorities
+    {
+        public const int Chat = 0;
+        public const int Item = 1;
+        public const int Station = 2;
+        public const int PassengerNeedingAttention = 3;
+
+        /// <param name="reacting">Em panico: conversar acalma (util).</param>
+        /// <param name="canReceiveHeldItem">O jogador segura exatamente o que ele pediu.</param>
+        public static int Passenger(bool reacting, bool canReceiveHeldItem)
+            => reacting || canReceiveHeldItem ? PassengerNeedingAttention : Chat;
+    }
+
     public static class InteractionTargetSelector
     {
         /// <summary>

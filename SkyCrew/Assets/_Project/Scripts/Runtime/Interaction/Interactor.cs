@@ -97,7 +97,7 @@ namespace SkyCrew.Interaction
                 to.y = 0f;
                 float angle = to.sqrMagnitude < 0.0001f ? 0f : Vector3.Angle(forward, to);
                 var check = Validate(target, distance);
-                _candidates.Add(new InteractionCandidate(distance, angle, target.Priority, check.Allowed));
+                _candidates.Add(new InteractionCandidate(distance, angle, target.GetPriority(this), check.Allowed));
                 _candidateTargets.Add(target);
             }
 

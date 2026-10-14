@@ -59,7 +59,7 @@ namespace SkyCrew.Physics
         public string GetPrompt(Interactor interactor) => IsHeld ? "Soltar o carrinho" : "Puxar o carrinho";
         public string GetAcceptedItemType(Interactor interactor) => null;
         public bool IsAvailable(Interactor interactor) => !_returned && (interactor.Hands == null || interactor.Hands.Held == null);
-        public int Priority => 2;
+        public int GetPriority(Interactor interactor) => InteractionPriorities.Station;
         public Vector3 InteractionPoint => transform.position + Vector3.up * 0.5f;
 
         public bool Execute(Interactor interactor)

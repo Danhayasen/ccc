@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+  <!-- Regras do jogo (o MESMO codigo de Assets/_Project/Scripts/Domain usado pela Unity)
+       compiladas para WebAssembly, com uma fachada [JSExport] para a versao de navegador. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>disable</Nullable>
+    <AssemblyName>SkyCrew.Web.Regras</AssemblyName>
+    <RootNamespace>SkyCrew.Web</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <CompressionEnabled>false</CompressionEnabled>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/_Project/Scripts/Domain/**/*.cs" />
+    <Compile Include="*.cs" />
+  </ItemGroup>
+</Project>

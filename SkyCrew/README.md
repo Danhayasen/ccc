@@ -6,7 +6,8 @@ cooperação online.
 
 - **Engine:** Unity 6 (6000.x) · C# · URP · Input System
 - **Plataforma inicial:** Windows PC
-- **Estado:** Fases 0, 1 e 2 implementadas, mais salvamento/progressão, personagens com esqueleto e animações, uniformes/acessórios, áudio provisório e menus. Regras testadas (123 testes); **ainda não executado no Editor da Unity** (veja *Estado real*)
+- **Estado:** Fases 0, 1 e 2 implementadas, mais salvamento/progressão, personagens com esqueleto e animações, uniformes/acessórios, áudio provisório e menus. Regras testadas (124 testes); **ainda não executado no Editor da Unity** (veja *Estado real*)
+- **Jogar no navegador:** https://danhayasen.github.io/ccc/jogo/ — versão three.js com as mesmas regras em C# (WebAssembly); veja `Web/README.md`
 
 ![Elenco](Tools/Blender/previas/elenco.png)
 ![Cabine](Tools/Blender/previas/cabine.png)

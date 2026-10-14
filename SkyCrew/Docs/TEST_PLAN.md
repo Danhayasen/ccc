@@ -2,7 +2,7 @@
 
 ## Automáticos
 
-### EditMode (regras, `Tests/EditMode`) — 123 testes
+### EditMode (regras, `Tests/EditMode`) — 124 testes
 Rodam no Test Runner da Unity e fora dela (`Tools/Verificacao/verificar.sh`).
 
 | Arquivo | Cobre |

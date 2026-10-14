@@ -23,3 +23,9 @@
 
 # Python
 __pycache__/
+
+# Versao de navegador: regras compiladas (geradas pelo dotnet publish / GitHub Actions)
+/Web/Regras/bin/
+/Web/Regras/obj/
+/Web/jogo/regras/
+!/Web/Regras/*.csproj

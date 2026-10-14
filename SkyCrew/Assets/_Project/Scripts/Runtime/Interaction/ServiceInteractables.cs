@@ -50,7 +50,7 @@ namespace SkyCrew.Interaction
         public bool IsAvailable(Interactor interactor)
             => IsBroken || (_factory != null && _loose < _maxLooseItems && Time.time >= _readyAt);
 
-        public int Priority => 2;
+        public int GetPriority(Interactor interactor) => InteractionPriorities.Station;
         public Vector3 InteractionPoint => transform.position;
 
         public bool Execute(Interactor interactor)
@@ -92,7 +92,7 @@ namespace SkyCrew.Interaction
         public string GetPrompt(Interactor interactor) => "Jogar no lixo";
         public string GetAcceptedItemType(Interactor interactor) => _acceptedItemType;
         public bool IsAvailable(Interactor interactor) => true;
-        public int Priority => 2;
+        public int GetPriority(Interactor interactor) => InteractionPriorities.Station;
         public Vector3 InteractionPoint => transform.position;
 
         public bool Execute(Interactor interactor)
@@ -132,7 +132,7 @@ namespace SkyCrew.Interaction
         public string GetPrompt(Interactor interactor) => _prompt;
         public string GetAcceptedItemType(Interactor interactor) => _acceptedItemType;
         public bool IsAvailable(Interactor interactor) => FreeSlot() >= 0;
-        public int Priority => 1;
+        public int GetPriority(Interactor interactor) => InteractionPriorities.Item;
         public Vector3 InteractionPoint => transform.position;
 
         private int FreeSlot()

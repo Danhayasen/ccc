@@ -1,5 +1,9 @@
 # Publicar o SkyCrew no navegador (GitHub Pages)
 
+**Versão de navegador (sem Unity):** o jogo já é publicado em https://danhayasen.github.io/ccc/jogo/
+sem nenhuma configuração extra (veja `Web/README.md`). O restante deste documento trata do build
+**WebGL da Unity**, opcional, publicado em `jogo-unity/` quando a licença estiver configurada.
+
 O fluxo `.github/workflows/publicar-jogo.yml` roda a cada push nas branches `main` e
 `claude/beautiful-gates-dsnswj`, e também pode ser iniciado à mão em **Actions**. Ele:
 

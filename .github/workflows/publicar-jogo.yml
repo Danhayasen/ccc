@@ -1,6 +1,8 @@
-# Compila o SkyCrew para navegador (Unity WebGL) e publica no GitHub Pages, junto com o
-# visualizador 3D do aviao. Sem a licenca da Unity configurada, publica so o visualizador e
-# uma pagina avisando que o jogo esta em preparo. Passo a passo: SkyCrew/Docs/PUBLICAR_NO_NAVEGADOR.md
+# Publica o SkyCrew no GitHub Pages (https://danhayasen.github.io/ccc/):
+#  - jogo/        versao de navegador (three.js + regras do jogo em C# compiladas para WebAssembly)
+#  - aviao/       visualizador 3D do aviao
+#  - jogo-unity/  build WebGL da Unity, somente se a licenca da Unity estiver nos segredos
+# Passo a passo: SkyCrew/Docs/PUBLICAR_NO_NAVEGADOR.md
 name: Publicar jogo no navegador
 
 on:
@@ -27,15 +29,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Testes das regras do jogo
+        run: dotnet test SkyCrew/Tools/Verificacao/Tests/SkyCrew.Tests.EditMode.csproj -nologo
+
+      - name: Compilar as regras para WebAssembly
+        run: dotnet publish SkyCrew/Web/Regras/SkyCrew.Web.Regras.csproj -c Release -o build/regras -nologo
+
       - name: Verificar licenca da Unity
         id: licenca
         run: |
           if [ -n "$UNITY_LICENSE" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then
             echo "ok=true" >> "$GITHUB_OUTPUT"
-            echo "Licenca encontrada: o jogo sera compilado."
           else
             echo "ok=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Segredos UNITY_LICENSE, UNITY_EMAIL e UNITY_PASSWORD ausentes. Publicando so o visualizador do aviao."
+            echo "::notice::Sem licenca da Unity: publicando a versao de navegador (three.js) e o visualizador."
           fi
 
       - name: Liberar espaco em disco
@@ -55,6 +66,7 @@ jobs:
 
       - name: Compilar com a Unity (WebGL)
         if: steps.licenca.outputs.ok == 'true'
+        continue-on-error: true
         uses: game-ci/unity-builder@v4
         with:
           projectPath: SkyCrew
@@ -68,18 +80,18 @@ jobs:
 
       - name: Montar o site
         run: |
-          mkdir -p site/jogo
+          mkdir -p site/jogo/regras
           cp SkyCrew/Tools/Site/index.html site/index.html
           rsync -a --exclude 'blender' --exclude '*.blend' --exclude '*.blend1' aviao/ site/aviao/
+          rsync -a --exclude 'regras' SkyCrew/Web/jogo/ site/jogo/
+          cp -r build/regras/wwwroot/_framework site/jogo/regras/
           if [ -f build/WebGL/SkyCrew/index.html ]; then
-            sudo cp -r build/WebGL/SkyCrew/. site/jogo/
-            sudo chown -R "$(id -u):$(id -g)" site/jogo
-          else
-            cp SkyCrew/Tools/Site/jogo-pendente.html site/jogo/index.html
+            mkdir -p site/jogo-unity
+            sudo cp -r build/WebGL/SkyCrew/. site/jogo-unity/
+            sudo chown -R "$(id -u):$(id -g)" site/jogo-unity
           fi
           touch site/.nojekyll
-          du -sh site site/jogo
-          find site -maxdepth 3 | head -50
+          du -sh site site/*
 
       - name: Publicar na branch gh-pages
         uses: peaceiris/actions-gh-pages@v4
